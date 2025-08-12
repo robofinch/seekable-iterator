@@ -49,20 +49,21 @@ any additional terms or conditions.
 [LICENSE-APACHE]: LICENSE-APACHE
 [LICENSE-MIT]: LICENSE-MIT
 
-[`PooledIterator`]
+[`PooledIterator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.PooledIterator.html
 
-[`SeekableIterator`]
-[`SeekableLendingIterator`]
-[`SeekablePooledIterator`]
+[`SeekableIterator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.SeekableIterator.html
+[`SeekableLendingIterator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.SeekableLendingIterator.html
+[`SeekablePooledIterator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.SeekablePooledIterator.html
 
-[`CursorIterator`]
-[`CursorLendingIterator`]
-[`CursorPooledIterator`]
+[`CursorIterator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.CursorIterator.html
+[`CursorLendingIterator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.CursorLendingIterator.html
+[`CursorPooledIterator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.CursorPooledIterator.html
 
-[`Seekable`]
-[`Comparator`]
-[`DefaultComparator`]
+[`Seekable`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.Seekable.html
+[`Comparator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.Comparator.html
+[`DefaultComparator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.DefaultComparator.html
 
-[`Ord`]
-[`lender::Lender`]
-[`lending_iterator::LendingIterator`]
+[`Ord`]: https://doc.rust-lang.org/std/cmp/trait.Ord.html
+[`FusedIterator`]: https://doc.rust-lang.org/std/iter/trait.FusedIterator.html
+[`lender::Lender`]: https://docs.rs/lender/0.3.2/lender/trait.Lender.html
+[`lending_iterator::LendingIterator`]: https://docs.rs/lending-iterator/0.1.7/lending_iterator/trait.LendingIterator.html

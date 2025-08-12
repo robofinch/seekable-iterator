@@ -20,12 +20,24 @@ use crate::lending_iterator_adapter::LendingIteratorAdapter;
 ///
 /// [`FusedIterator`]: core::iter::FusedIterator
 pub trait CursorIterator: Iterator {
+    /// Determine whether the iterator is currently at any value in the collection.
+    /// If the iterator is invalid, then it is conceptually one position before the first entry
+    /// and one position after the last entry. (Or, there may be no entries.)
+    ///
+    /// [`current()`] will be `Some` if and only if the iterator is valid.
+    ///
+    /// [`current()`]: CursorIterator::current
     #[must_use]
     fn valid(&self) -> bool;
 
+    /// Get the current value the iterator is at, if the iterator is [valid].
+    ///
+    /// [valid]: CursorIterator::valid
     #[must_use]
     fn current(&self) -> Option<Self::Item>;
 
+    /// Move the iterator one position back, and return the entry at that position.
+    /// Returns `None` if the iterator was at the first entry.
     fn prev(&mut self) -> Option<Self::Item>;
 }
 
@@ -46,18 +58,40 @@ pub trait CursorIterator: Iterator {
 ///
 /// [`FusedIterator`]: core::iter::FusedIterator
 pub trait CursorLendingIterator {
+    /// The item of this lending iterator, whose lifetime can force the consumer to drop the item
+    /// before obtaining a new item (which requires a mutable borrow to the iterator, invalidating
+    /// the borrow of the previous item).
     type Item<'a> where Self: 'a;
 
+    /// Determine whether the iterator is currently at any value in the collection.
+    /// If the iterator is invalid, then it is conceptually one position before the first entry
+    /// and one position after the last entry. (Or, there may be no entries.)
+    ///
+    /// [`current()`] will be `Some` if and only if the iterator is valid.
+    ///
+    /// [`current()`]: CursorLendingIterator::current
     #[must_use]
     fn valid(&self) -> bool;
 
+    /// Move the iterator one position forwards, and return the entry at that position.
+    /// Returns `None` if the iterator was at the last entry.
     fn next(&mut self) -> Option<Self::Item<'_>>;
 
+    /// Get the current value the iterator is at, if the iterator is [valid].
+    ///
+    /// [valid]: CursorLendingIterator::valid
     #[must_use]
     fn current(&self) -> Option<Self::Item<'_>>;
 
+    /// Move the iterator one position back, and return the entry at that position.
+    /// Returns `None` if the iterator was at the first entry.
     fn prev(&mut self) -> Option<Self::Item<'_>>;
 
+    /// Convert the `CursorLendingIterator` into a [`lender::Lender`] lending iterator.
+    ///
+    /// The seekability and access to cursor methods are preserved, though none of the
+    /// `Cursor*Iterator` or `Seekable*Iterator` traits are implemented for the adaptor, in order
+    /// to avoid conflicts with the `next()` method name.
     #[cfg(feature = "lender")]
     #[inline]
     #[must_use]
@@ -65,6 +99,11 @@ pub trait CursorLendingIterator {
         LenderAdapter::new(self)
     }
 
+    /// Convert the `CursorLendingIterator` into a [`lending_iterator::LendingIterator`].
+    ///
+    /// The seekability and access to cursor methods are preserved, though none of the
+    /// `Cursor*Iterator` or `Seekable*Iterator` traits are implemented for the adaptor, in order
+    /// to avoid conflicts with the `next()` method name.
     #[cfg(feature = "lending-iterator")]
     #[inline]
     #[must_use]
@@ -91,18 +130,48 @@ pub trait CursorLendingIterator {
 ///
 /// [`FusedIterator`]: core::iter::FusedIterator
 pub trait CursorPooledIterator: PooledIterator {
+    /// Determine whether the iterator is currently at any value in the collection.
+    /// If the iterator is invalid, then it is conceptually one position before the first entry
+    /// and one position after the last entry. (Or, there may be no entries.)
+    ///
+    /// [`current()`] will be `Some` if and only if the iterator is valid.
+    ///
+    /// [`current()`]: CursorPooledIterator::current
     #[must_use]
     fn valid(&self) -> bool;
 
+    /// Get the current value the iterator is at, if the iterator is [valid].
+    ///
+    /// May need to wait for a buffer to become available.
+    ///
+    /// # Potential Panics or Deadlocks
+    /// If `self.buffer_pool_size() == 0`, then this method may panic or deadlock.
+    ///
+    /// [valid]: CursorPooledIterator::valid
     #[must_use]
     fn current(&self) -> Option<Self::Item>;
 
+    /// Move the iterator one position back, and return the entry at that position.
+    /// Returns `None` if the iterator was at the first entry.
+    ///
+    /// May need to wait for a buffer to become available.
+    ///
+    /// # Potential Panics or Deadlocks
+    /// If `self.buffer_pool_size() == 0`, then this method may panic or deadlock.
     fn prev(&mut self) -> Option<Self::Item>;
 
+    /// If a buffer is available, get the current value the iterator is at, if the iterator is
+    /// [valid].
+    ///
     /// # Errors
     /// Returns an error if no buffers were available.
+    ///
+    /// [valid]: CursorPooledIterator::valid
     fn try_current(&self) -> Result<Option<Self::Item>, OutOfBuffers>;
 
+    /// If a buffer is available, move the iterator one position back, and return the entry at
+    /// that position. Returns `Ok(None)` if the iterator was at the first entry.
+    ///
     /// # Errors
     /// Returns an error if no buffers were available.
     fn try_prev(&mut self) -> Result<Option<Self::Item>, OutOfBuffers>;

@@ -4,6 +4,28 @@
 //! [LICENSE-APACHE]: https://github.com/robofinch/generic-container/blob/main/LICENSE-APACHE
 //! [LICENSE-MIT]: https://github.com/robofinch/generic-container/blob/main/LICENSE-MIT
 //!
+//! [`PooledIterator`]: PooledIterator
+//!
+//! [`SeekableIterator`]: SeekableIterator
+//! [`SeekableLendingIterator`]: SeekableLendingIterator
+//! [`SeekablePooledIterator`]: SeekablePooledIterator
+//!
+//! [`CursorIterator`]: CursorIterator
+//! [`CursorLendingIterator`]: CursorLendingIterator
+//! [`CursorPooledIterator`]: CursorPooledIterator
+//!
+//! [`Seekable`]: Seekable
+//! [`Comparator`]: Comparator
+//! [`DefaultComparator`]: DefaultComparator
+//!
+//! [`Ord`]: Ord
+//! [`FusedIterator`]: core::iter::FusedIterator
+#![cfg_attr(feature = "lender", doc = " [`lender::Lender`]: lender::Lender")]
+#![cfg_attr(
+    feature = "lending-iterator",
+    doc = " [`lending_iterator::LendingIterator`]: lending_iterator::LendingIterator",
+)]
+//!
 //! <style>
 //! .rustdoc-hidden { display: none; }
 //! </style>
