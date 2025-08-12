@@ -1,5 +1,3 @@
-use core::borrow::Borrow;
-
 use lender::{Lend, Lender, Lending};
 
 use crate::seekable::delegate_seekable;

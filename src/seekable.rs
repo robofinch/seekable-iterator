@@ -1,5 +1,3 @@
-use core::borrow::Borrow;
-
 use crate::comparator::Comparator;
 
 
@@ -23,7 +21,7 @@ pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
     /// If there is no such key, the iterator becomes `!valid()`, and is conceptually
     /// one position before the first entry and one position after the last entry (if there are
     /// any entries in the collection).
-    fn seek<K>(&mut self, min_bound: K) where Key: Borrow<K>;
+    fn seek(&mut self, min_bound: &Key);
 
     /// Move the iterator to the greatest key which is strictly less than the provided
     /// `strict_upper_bound`.
@@ -31,7 +29,7 @@ pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
     /// If there is no such key, the iterator becomes `!valid()`, and is conceptually
     /// one position before the first entry and one position after the last entry (if there are
     /// any entries in the collection).
-    fn seek_before<K>(&mut self, strict_upper_bound: K) where Key: Borrow<K>;
+    fn seek_before(&mut self, strict_upper_bound: &Key);
 
     /// Move the iterator to the smallest key in the collection.
     ///
@@ -59,12 +57,12 @@ macro_rules! delegate_seekable {
             }
 
             #[inline]
-            fn seek<K>(&mut self, min_bound: K) where Key: Borrow<K> {
+            fn seek(&mut self, min_bound: &Key) {
                 self.$field.seek(min_bound);
             }
 
             #[inline]
-            fn seek_before<K>(&mut self, strict_upper_bound: K) where Key: Borrow<K> {
+            fn seek_before(&mut self, strict_upper_bound: &Key) {
                 self.$field.seek_before(strict_upper_bound);
             }
 

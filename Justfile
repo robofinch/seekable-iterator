@@ -54,7 +54,6 @@ clippy *args:
     cargo +stable hack clippy --feature-powerset {{args}}
     RUSTFLAGS="-Zcrate-attr=feature(\
                     strict_provenance_lints,\
-                    multiple_supertrait_upcastable,\
                     must_not_suspend,\
                     non_exhaustive_omitted_patterns_lint,\
                     supertrait_item_shadowing,\
@@ -62,7 +61,6 @@ clippy *args:
                 ) \
                 -Wfuzzy_provenance_casts \
                 -Wlossy_provenance_casts \
-                -Wmultiple_supertrait_upcastable \
                 -Wmust_not_suspend \
                 -Wnon_exhaustive_omitted_patterns \
                 -Wsupertrait_item_shadowing_definition \

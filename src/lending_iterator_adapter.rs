@@ -1,5 +1,3 @@
-use core::borrow::Borrow;
-
 use lending_iterator::lending_iterator::Item;
 
 use crate::seekable::delegate_seekable;
