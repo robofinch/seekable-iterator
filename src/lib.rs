@@ -34,7 +34,7 @@ mod lending_iterator_adapter;
 pub use self::{
     comparator::{Comparator, DefaultComparator},
     cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator},
-    pooled::{PooledIterator, WouldBlock},
+    pooled::{OutOfBuffers, PooledIterator},
     seekable::Seekable,
     seekable_iterators::{SeekableIterator, SeekableLendingIterator, SeekablePooledIterator},
 };

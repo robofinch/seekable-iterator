@@ -1,10 +1,24 @@
-use crate::pooled::{PooledIterator, WouldBlock};
+use crate::pooled::{OutOfBuffers, PooledIterator};
 #[cfg(feature = "lender")]
-use crate::lender_adapter::{LenderAdapter, PooledLenderAdapter};
+use crate::lender_adapter::LenderAdapter;
 #[cfg(feature = "lending-iterator")]
-use crate::lending_iterator_adapter::{LendingIteratorAdapter, PooledLendingIteratorAdapter};
+use crate::lending_iterator_adapter::LendingIteratorAdapter;
 
 
+/// A `CursorIterator` provides access to the entries of some sorted collection, and can move its
+/// current position in either direction.
+///
+/// Conceptually, it is circular, and its initial position is before the first entry and after the
+/// last entry. As such, it is not a [`FusedIterator`], as continuing to call `next()` at the
+/// end of iteration wraps around to the start. (Note that if the collection is empty, then the
+/// iterator will remain at that phantom position.)
+///
+/// Implementations may or may not be threadsafe. Even if an implementation is threadsafe,
+/// newly-added entries may or may not be seen immediately by other threads.
+///
+/// Forwards iteration should be preferred over backwards iteration.
+///
+/// [`FusedIterator`]: core::iter::FusedIterator
 pub trait CursorIterator: Iterator {
     #[must_use]
     fn valid(&self) -> bool;
@@ -15,6 +29,22 @@ pub trait CursorIterator: Iterator {
     fn prev(&mut self) -> Option<Self::Item>;
 }
 
+/// A `CursorLendingIterator` provides access to the entries of some sorted collection, and can
+/// move its current position in either direction.
+///
+/// As a lending iterator, only one entry can be accessed at a time.
+///
+/// Conceptually, it is circular, and its initial position is before the first entry and after the
+/// last entry. As such, it is not a [`FusedIterator`], as continuing to call `next()` at the
+/// end of iteration wraps around to the start. (Note that if the collection is empty, then the
+/// iterator will remain at that phantom position.)
+///
+/// Implementations may or may not be threadsafe. Even if an implementation is threadsafe,
+/// newly-added entries may or may not be seen immediately by other threads.
+///
+/// Forwards iteration should be preferred over backwards iteration.
+///
+/// [`FusedIterator`]: core::iter::FusedIterator
 pub trait CursorLendingIterator {
     type Item<'a> where Self: 'a;
 
@@ -43,6 +73,23 @@ pub trait CursorLendingIterator {
     }
 }
 
+/// A `CursorPooledIterator` provides access to the entries of some sorted collection, and can
+/// move its current position in either direction.
+///
+/// The iterator is similar to a lending iterator (which can lend one item at a time), but can
+/// make use of a buffer pool to lend out multiple items at a time.
+///
+/// Conceptually, it is circular, and its initial position is before the first entry and after the
+/// last entry. As such, it is not a [`FusedIterator`], as continuing to call `next()` at the
+/// end of iteration wraps around to the start. (Note that if the collection is empty, then the
+/// iterator will remain at that phantom position.)
+///
+/// Implementations may or may not be threadsafe. Even if an implementation is threadsafe,
+/// newly-added entries may or may not be seen immediately by other threads.
+///
+/// Forwards iteration should be preferred over backwards iteration.
+///
+/// [`FusedIterator`]: core::iter::FusedIterator
 pub trait CursorPooledIterator: PooledIterator {
     #[must_use]
     fn valid(&self) -> bool;
@@ -53,24 +100,10 @@ pub trait CursorPooledIterator: PooledIterator {
     fn prev(&mut self) -> Option<Self::Item>;
 
     /// # Errors
-    /// Errors if the operation would have blocked, due to no buffers being available.
-    fn try_current(&self) -> Result<Option<Self::Item>, WouldBlock>;
+    /// Returns an error if no buffers were available.
+    fn try_current(&self) -> Result<Option<Self::Item>, OutOfBuffers>;
 
     /// # Errors
-    /// Errors if the operation would have blocked, due to no buffers being available.
-    fn try_prev(&mut self) -> Result<Option<Self::Item>, WouldBlock>;
-
-    #[cfg(feature = "lender")]
-    #[inline]
-    #[must_use]
-    fn into_lender(self) -> PooledLenderAdapter<Self> where Self: Sized {
-        PooledLenderAdapter::new(self)
-    }
-
-    #[cfg(feature = "lending-iterator")]
-    #[inline]
-    #[must_use]
-    fn into_lending_iterator(self) -> PooledLendingIteratorAdapter<Self> where Self: Sized {
-        PooledLendingIteratorAdapter::new(self)
-    }
+    /// Returns an error if no buffers were available.
+    fn try_prev(&mut self) -> Result<Option<Self::Item>, OutOfBuffers>;
 }

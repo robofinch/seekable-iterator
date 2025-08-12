@@ -26,18 +26,18 @@ impl<I: CursorLendingIterator> Lender for LenderAdapter<I> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PooledLenderAdapter<I: PooledIterator>(
-    Option<(I, Option<I::Item>)>
-);
+pub struct PooledLenderAdapter<I: PooledIterator> {
+    iter: I,
+    item: Option<I::Item>,
+}
 
 impl<I: PooledIterator> PooledLenderAdapter<I> {
     #[inline]
     #[must_use]
-    pub(crate) fn new(iter: I) -> Self {
-        if iter.buffer_pool_size() == 0 {
-            Self(None)
-        } else {
-            Self(Some((iter, None)))
+    pub(crate) const fn new(iter: I) -> Self {
+        Self {
+            iter,
+            item: None,
         }
     }
 }
@@ -49,13 +49,9 @@ impl<'lend, I: PooledIterator> Lending<'lend> for PooledLenderAdapter<I> {
 impl<I: PooledIterator> Lender for PooledLenderAdapter<I> {
     #[inline]
     fn next(&mut self) -> Option<Lend<'_, Self>> {
-        if let Some((iter, item)) = &mut self.0 {
-            // Make sure any previous item is dropped
-            *item = None;
-            *item = iter.next();
-            item.as_ref()
-        } else {
-            None
-        }
+        // Make sure any previous item is dropped
+        self.item = None;
+        self.item = self.iter.next();
+        self.item.as_ref()
     }
 }

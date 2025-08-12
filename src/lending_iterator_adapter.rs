@@ -1,4 +1,4 @@
-use crate::cursor::CursorPooledIterator;
+use crate::pooled::PooledIterator;
 
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,18 +13,18 @@ impl<I> LendingIteratorAdapter<I> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PooledLendingIteratorAdapter<I: CursorPooledIterator>(
-    Option<(I, Option<I::Item>)>
-);
+pub struct PooledLendingIteratorAdapter<I: PooledIterator> {
+    iter: I,
+    item: Option<I::Item>,
+}
 
-impl<I: CursorPooledIterator> PooledLendingIteratorAdapter<I> {
+impl<I: PooledIterator> PooledLendingIteratorAdapter<I> {
     #[inline]
     #[must_use]
-    pub(crate) fn new(iter: I) -> Self {
-        if iter.buffer_pool_size() == 0 {
-            Self(None)
-        } else {
-            Self(Some((iter, None)))
+    pub(crate) const fn new(iter: I) -> Self {
+        Self {
+            iter,
+            item: None,
         }
     }
 }
@@ -32,7 +32,7 @@ impl<I: CursorPooledIterator> PooledLendingIteratorAdapter<I> {
 mod lint_and_glob_scope {
     use lending_iterator::prelude::*;
 
-    use crate::cursor::{CursorLendingIterator, CursorPooledIterator};
+    use crate::{cursor::CursorLendingIterator, pooled::PooledIterator};
     use super::{LendingIteratorAdapter, PooledLendingIteratorAdapter};
 
 
@@ -47,19 +47,15 @@ mod lint_and_glob_scope {
     }
 
     #[gat]
-    impl<I: CursorPooledIterator> LendingIterator for PooledLendingIteratorAdapter<I> {
+    impl<I: PooledIterator> LendingIterator for PooledLendingIteratorAdapter<I> {
         type Item<'next> = &'next I::Item;
 
         #[inline]
         fn next(&mut self) -> Option<Item<'_, Self>> {
-            if let Some((iter, item)) = &mut self.0 {
-                // Make sure any previous item is dropped
-                *item = None;
-                *item = iter.next();
-                item.as_ref()
-            } else {
-                None
-            }
+            // Make sure any previous item is dropped
+            self.item = None;
+            self.item = self.iter.next();
+            self.item.as_ref()
         }
     }
 }
