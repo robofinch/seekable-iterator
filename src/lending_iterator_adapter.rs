@@ -131,13 +131,13 @@ delegate_seekable!(PooledLendingIteratorAdapter.iter PooledIterator);
 mod lint_and_glob_scope {
     use lending_iterator::prelude::*;
 
-    use crate::{cursor::CursorLendingIterator, pooled::PooledIterator};
+    use crate::{cursor::CursorLendingIterator, pooled::PooledIterator, LentItem};
     use super::{LendingIteratorAdapter, PooledLendingIteratorAdapter};
 
 
     #[gat]
     impl<I: CursorLendingIterator> LendingIterator for LendingIteratorAdapter<I> {
-        type Item<'next> = I::Item<'next>;
+        type Item<'next> = LentItem<'next, I>;
 
         #[inline]
         fn next(&mut self) -> Option<Item<'_, Self>> {

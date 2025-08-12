@@ -1,4 +1,7 @@
-use crate::pooled::{OutOfBuffers, PooledIterator};
+use crate::{
+    lending_iterator_support::{LendItem, LentItem},
+    pooled::{OutOfBuffers, PooledIterator},
+};
 #[cfg(feature = "lender")]
 use crate::lender_adapter::LenderAdapter;
 #[cfg(feature = "lending-iterator")]
@@ -57,12 +60,7 @@ pub trait CursorIterator: Iterator {
 /// Forwards iteration should be preferred over backwards iteration.
 ///
 /// [`FusedIterator`]: core::iter::FusedIterator
-pub trait CursorLendingIterator {
-    /// The item of this lending iterator, whose lifetime can force the consumer to drop the item
-    /// before obtaining a new item (which requires a mutable borrow to the iterator, invalidating
-    /// the borrow of the previous item).
-    type Item<'a> where Self: 'a;
-
+pub trait CursorLendingIterator: for<'a> LendItem<'a> {
     /// Determine whether the iterator is currently at any value in the collection.
     /// If the iterator is invalid, then it is conceptually one position before the first entry
     /// and one position after the last entry. (Or, there may be no entries.)
@@ -75,17 +73,17 @@ pub trait CursorLendingIterator {
 
     /// Move the iterator one position forwards, and return the entry at that position.
     /// Returns `None` if the iterator was at the last entry.
-    fn next(&mut self) -> Option<Self::Item<'_>>;
+    fn next(&mut self) -> Option<LentItem<'_, Self>>;
 
     /// Get the current value the iterator is at, if the iterator is [valid].
     ///
     /// [valid]: CursorLendingIterator::valid
     #[must_use]
-    fn current(&self) -> Option<Self::Item<'_>>;
+    fn current(&self) -> Option<LentItem<'_, Self>>;
 
     /// Move the iterator one position back, and return the entry at that position.
     /// Returns `None` if the iterator was at the first entry.
-    fn prev(&mut self) -> Option<Self::Item<'_>>;
+    fn prev(&mut self) -> Option<LentItem<'_, Self>>;
 
     /// Convert the `CursorLendingIterator` into a [`lender::Lender`] lending iterator.
     ///

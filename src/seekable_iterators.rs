@@ -6,11 +6,10 @@ use crate::cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator}
 /// [`Seekable`].
 ///
 /// See [`CursorIterator`] for more.
-pub trait SeekableIterator<Key, Cmp>
+pub trait SeekableIterator<Key, Cmp>: CursorIterator + Seekable<Key, Cmp>
 where
     Key: ?Sized,
     Cmp: ?Sized + Comparator<Key>,
-    Self: CursorIterator + Seekable<Key, Cmp>,
 {}
 
 impl<Key, Cmp, I> SeekableIterator<Key, Cmp> for I
@@ -26,11 +25,10 @@ where
 /// As a lending iterator, only one entry can be accessed at a time.
 ///
 /// See [`CursorLendingIterator`] for more.
-pub trait SeekableLendingIterator<Key, Cmp>
+pub trait SeekableLendingIterator<Key, Cmp>: CursorLendingIterator + Seekable<Key, Cmp>
 where
     Key: ?Sized,
     Cmp: ?Sized + Comparator<Key>,
-    Self: CursorLendingIterator + Seekable<Key, Cmp>,
 {}
 
 impl<Key, Cmp, I> SeekableLendingIterator<Key, Cmp> for I
@@ -49,11 +47,10 @@ where
 /// See [`CursorPooledIterator`] for more.
 ///
 /// [`PooledIterator`]: crate::pooled::PooledIterator
-pub trait SeekablePooledIterator<Key, Cmp>
+pub trait SeekablePooledIterator<Key, Cmp>: CursorPooledIterator + Seekable<Key, Cmp>
 where
     Key: ?Sized,
     Cmp: ?Sized + Comparator<Key>,
-    Self: CursorPooledIterator + Seekable<Key, Cmp>,
 {}
 
 impl<Key, Cmp, I> SeekablePooledIterator<Key, Cmp> for I

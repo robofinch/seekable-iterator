@@ -50,8 +50,9 @@ impl<Key: ?Sized, C: FragileContainer<dyn Comparator<Key>>> Comparator<Key> for 
 #[cfg(feature = "generic-container")]
 impl<T, C, Key> Comparator<Key> for GenericContainer<T, C>
 where
-    T: ?Sized + Comparator<Key>,
-    C: ?Sized + FragileContainer<T>,
+    T:   ?Sized + Comparator<Key>,
+    C:   ?Sized + FragileContainer<T>,
+    Key: ?Sized,
 {
     #[inline]
     fn cmp(&self, lhs: &Key, rhs: &Key) -> Ordering {

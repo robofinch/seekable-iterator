@@ -1,7 +1,10 @@
 use lender::{Lend, Lender, Lending};
 
 use crate::seekable::delegate_seekable;
-use crate::{comparator::Comparator, pooled::PooledIterator, seekable::Seekable};
+use crate::{
+    comparator::Comparator, lending_iterator_support::LentItem,
+    pooled::PooledIterator, seekable::Seekable,
+};
 use crate::cursor::{CursorLendingIterator, CursorPooledIterator};
 
 
@@ -30,7 +33,7 @@ impl<I> LenderAdapter<I> {
 }
 
 impl<'lend, I: CursorLendingIterator> Lending<'lend> for LenderAdapter<I> {
-    type Lend = I::Item<'lend>;
+    type Lend = LentItem<'lend, I>;
 }
 
 impl<I: CursorLendingIterator> Lender for LenderAdapter<I> {

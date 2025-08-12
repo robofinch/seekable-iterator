@@ -47,6 +47,8 @@ mod pooled;
 mod seekable;
 mod seekable_iterators;
 
+mod lending_iterator_support;
+
 #[cfg(feature = "lender")]
 mod lender_adapter;
 #[cfg(feature = "lending-iterator")]
@@ -56,6 +58,7 @@ mod lending_iterator_adapter;
 pub use self::{
     comparator::{Comparator, DefaultComparator},
     cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator},
+    lending_iterator_support::{ImplyBound, LendItem, LentItem},
     pooled::{OutOfBuffers, PooledIterator},
     seekable::Seekable,
     seekable_iterators::{SeekableIterator, SeekableLendingIterator, SeekablePooledIterator},
