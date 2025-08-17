@@ -19,8 +19,11 @@ Provides:
   - [`Seekable`] trait, with all the seeking methods required by the `Seekable*Iterator` traits.
   - [`Comparator`] trait, for comparisons done to seek.
 
-Adapters to [`lender::Lender`] and [`lending_iterator::LendingIterator`] are provided for the
-lending iterator trait.
+Adapters to [`lender::Lender`] and [`lending_iterator::LendingIterator`] are provided for
+[`CursorLendingIterator`] and [`PooledIterator`] when the corresponding features are enabled.
+
+Depending on features, [`MergingIter`], [`PooledIter`], and [`ThreadsafePooledIter`] iterator
+adapters are provided.
 
 # Semantics
 
@@ -37,6 +40,20 @@ The `PooledIterator` and `Cursor*Iterator` traits do not expose any comparator t
 collection and iterator might be using, but the [`Seekable`] and `Seekable*Iterator` traits _do_
 expose it via a [`Comparator`] generic. A [`DefaultComparator`] struct is provided that can compare
 keys that implement [`Ord`], using their [`Ord`] implementation.
+
+# Features
+
+- `clone-behavior` (enabled by default): Implements `clone-behavior` traits for `DefaultComparator`.
+- `generic-container` (enabled by default): Implements `Comparator` for containers of
+  `dyn Comparator`, and for `GenericContainer` whenever `GenericContainer` wraps a container of a
+  `Comparator` implementation.
+- `lender`: provide adapters to [`lender::Lender`].
+- `lending-iterator`: provide adapters to [`lending_iterator::LendingIterator`].
+- `alloc`: provide [`MergingIter`] and [`PooledIter`]. [`MergingIter`] merges together several
+  [`SeekableLendingIterator`]s into one [`SeekableLendingIterator`] that iterates over all their
+  items. Note: `alloc` isn't truly crucial for `MergingIter`; open an issue if you want it on
+  no-alloc. [`PooledIter`] is an adapter [`CursorLendingIterator`] to [`CursorPooledIterator`].
+- `std`: provide [`ThreadsafePooledIter`], a `Send + Sync` version of [`PooledIter`].
 
 ## License
 
@@ -67,6 +84,10 @@ any additional terms or conditions.
 [`Seekable`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.Seekable.html
 [`Comparator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.Comparator.html
 [`DefaultComparator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.DefaultComparator.html
+
+[`MergingIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.MergingIter.html
+[`PooledIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.PooledIter.html
+[`ThreadsafePooledIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.ThreadsafePooledIter.html
 
 [`Ord`]: https://doc.rust-lang.org/std/cmp/trait.Ord.html
 [`FusedIterator`]: https://doc.rust-lang.org/std/iter/trait.FusedIterator.html

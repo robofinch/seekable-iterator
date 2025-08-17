@@ -26,7 +26,12 @@ pub trait PooledIterator {
     /// May need to wait for a buffer to become available.
     ///
     /// # Potential Panics or Deadlocks
-    /// If `self.buffer_pool_size() == 0`, then this method may panic or deadlock.
+    /// If `self.buffer_pool_size() == 0`, then this method is permitted to panic or deadlock.
+    /// This method may also panic or cause a deadlock if no buffers are currently available, and
+    /// the current thread needs to make progress in order to release a buffer.
+    ///
+    /// If it is possible for a different thread to make progress and make a buffer available,
+    /// this method should not panic or deadlock.
     fn next(&mut self) -> Option<Self::Item>;
 
     /// If a buffer is available, move the iterator one position forwards, and return the entry at

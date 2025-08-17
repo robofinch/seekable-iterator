@@ -1,9 +1,16 @@
 use crate::comparator::Comparator;
+use crate::lending_iterator_support::{LendItem, LentItem};
 
 
 /// A trait adding seek functionality to one of the cursor iterator traits.
 ///
 /// See [`CursorIterator`], [`CursorLendingIterator`], or [`CursorPooledIterator`] for more.
+///
+/// Additionally, the keys of implementors must be sorted by a comparator of the indicated
+/// [`Comparator`] type.
+///
+/// Implementors of `Seekable` and [`CursorLendingIterator`] should strongly consider implementing
+/// [`ItemToKey`] as well.
 ///
 /// [`CursorIterator`]: crate::cursor::CursorIterator
 /// [`CursorLendingIterator`]: crate::cursor::CursorLendingIterator
@@ -12,7 +19,8 @@ pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
     /// Reset the iterator to its initial position, before the first entry and after the last
     /// entry (if there are any entries in the collection).
     ///
-    /// The iterator will then not be `!valid()`.
+    /// The iterator becomes `!valid()`, and is conceptually one position before the first entry
+    /// and one position after the last entry (if there are any entries in the collection).
     fn reset(&mut self);
 
     /// Move the iterator to the smallest key which is greater or equal than the provided
@@ -29,6 +37,10 @@ pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
     /// If there is no such key, the iterator becomes `!valid()`, and is conceptually
     /// one position before the first entry and one position after the last entry (if there are
     /// any entries in the collection).
+    ///
+    /// Some implementations may have worse performance for `seek_before` than [`seek`].
+    ///
+    /// [`seek`]: Seekable::seek
     fn seek_before(&mut self, strict_upper_bound: &Key);
 
     /// Move the iterator to the smallest key in the collection.
@@ -40,6 +52,18 @@ pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
     ///
     /// If the collection is empty, the iterator is `!valid()`.
     fn seek_to_last(&mut self);
+}
+
+/// Convert one of the items of an iterator into a `Key` reference, intended for use with
+/// [`Seekable`].
+///
+/// This conversion is expected to be cheap.
+pub trait ItemToKey<Key: ?Sized>: for<'lend> LendItem<'lend> {
+    /// Convert one of the items of an iterator into a `Key` reference, intended for use with
+    /// [`Seekable`].
+    ///
+    /// This conversion is expected to be cheap.
+    fn item_to_key(item: LentItem<'_, Self>) -> &'_ Key;
 }
 
 #[cfg(any(feature = "lender", feature = "lending-iterator"))]

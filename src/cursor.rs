@@ -41,6 +41,9 @@ pub trait CursorIterator: Iterator {
 
     /// Move the iterator one position back, and return the entry at that position.
     /// Returns `None` if the iterator was at the first entry.
+    ///
+    /// Some implementations may have worse performance for backwards iteration than forwards
+    /// iteration, so prefer to not use `prev`.
     fn prev(&mut self) -> Option<Self::Item>;
 }
 
@@ -83,6 +86,9 @@ pub trait CursorLendingIterator: for<'a> LendItem<'a> {
 
     /// Move the iterator one position back, and return the entry at that position.
     /// Returns `None` if the iterator was at the first entry.
+    ///
+    /// Some implementations may have worse performance for backwards iteration than forwards
+    /// iteration, so prefer to not use `prev`.
     fn prev(&mut self) -> Option<LentItem<'_, Self>>;
 
     /// Convert the `CursorLendingIterator` into a [`lender::Lender`] lending iterator.
@@ -143,7 +149,12 @@ pub trait CursorPooledIterator: PooledIterator {
     /// May need to wait for a buffer to become available.
     ///
     /// # Potential Panics or Deadlocks
-    /// If `self.buffer_pool_size() == 0`, then this method may panic or deadlock.
+    /// If `self.buffer_pool_size() == 0`, then this method is permitted to panic or deadlock.
+    /// This method may also panic or cause a deadlock if no buffers are currently available, and
+    /// the current thread needs to make progress in order to release a buffer.
+    ///
+    /// If it is possible for a different thread to make progress and make a buffer available,
+    /// this method should not panic or deadlock.
     ///
     /// [valid]: CursorPooledIterator::valid
     #[must_use]
@@ -154,8 +165,16 @@ pub trait CursorPooledIterator: PooledIterator {
     ///
     /// May need to wait for a buffer to become available.
     ///
+    /// Some implementations may have worse performance for backwards iteration than forwards
+    /// iteration, so prefer to not use `prev`.
+    ///
     /// # Potential Panics or Deadlocks
-    /// If `self.buffer_pool_size() == 0`, then this method may panic or deadlock.
+    /// If `self.buffer_pool_size() == 0`, then this method is permitted to panic or deadlock.
+    /// This method may also panic or cause a deadlock if no buffers are currently available, and
+    /// the current thread needs to make progress in order to release a buffer.
+    ///
+    /// If it is possible for a different thread to make progress and make a buffer available,
+    /// this method should not panic or deadlock.
     fn prev(&mut self) -> Option<Self::Item>;
 
     /// If a buffer is available, get the current value the iterator is at, if the iterator is
@@ -169,6 +188,9 @@ pub trait CursorPooledIterator: PooledIterator {
 
     /// If a buffer is available, move the iterator one position back, and return the entry at
     /// that position. Returns `Ok(None)` if the iterator was at the first entry.
+    ///
+    /// Some implementations may have worse performance for backwards iteration than forwards
+    /// iteration, so prefer to not use `try_prev`.
     ///
     /// # Errors
     /// Returns an error if no buffers were available.

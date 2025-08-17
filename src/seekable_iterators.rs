@@ -6,6 +6,8 @@ use crate::cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator}
 /// [`Seekable`].
 ///
 /// See [`CursorIterator`] for more.
+///
+/// All implementations are automatically provided by a blanket impl.
 pub trait SeekableIterator<Key, Cmp>: CursorIterator + Seekable<Key, Cmp>
 where
     Key: ?Sized,
@@ -25,6 +27,14 @@ where
 /// As a lending iterator, only one entry can be accessed at a time.
 ///
 /// See [`CursorLendingIterator`] for more.
+///
+/// All implementations are automatically provided by a blanket impl.
+///
+/// # Note
+/// Types which implement [`SeekableLendingIterator`] should strongly consider implementing
+/// [`ItemToKey`] as well.
+///
+/// [`ItemToKey`]: crate::seekable::ItemToKey
 pub trait SeekableLendingIterator<Key, Cmp>: CursorLendingIterator + Seekable<Key, Cmp>
 where
     Key: ?Sized,
@@ -45,6 +55,8 @@ where
 /// make use of a buffer pool to lend out multiple items at a time.
 ///
 /// See [`CursorPooledIterator`] for more.
+///
+/// All implementations are automatically provided by a blanket impl.
 ///
 /// [`PooledIterator`]: crate::pooled::PooledIterator
 pub trait SeekablePooledIterator<Key, Cmp>: CursorPooledIterator + Seekable<Key, Cmp>

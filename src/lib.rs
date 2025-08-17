@@ -25,6 +25,18 @@
     feature = "lending-iterator",
     doc = " [`lending_iterator::LendingIterator`]: lending_iterator::LendingIterator",
 )]
+#![cfg_attr(
+    feature = "alloc",
+    doc = " [`MergingIter`]: merging_iter::MergingIter",
+)]
+#![cfg_attr(
+    feature = "alloc",
+    doc = " [`PooledIter`]: pooled_iter::PooledIter",
+)]
+#![cfg_attr(
+    feature = "std",
+    doc = " [`ThreadsafePooledIter`]: threadsafe_pooled_iter::ThreadsafePooledIter",
+)]
 //!
 //! <style>
 //! .rustdoc-hidden { display: none; }
@@ -41,6 +53,11 @@
 
 #![no_std]
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
+
 mod comparator;
 mod cursor;
 mod pooled;
@@ -48,6 +65,16 @@ mod seekable;
 mod seekable_iterators;
 
 mod lending_iterator_support;
+
+#[cfg(feature = "alloc")]
+mod merging_iter;
+#[cfg(feature = "alloc")]
+mod pooled_iter;
+#[cfg(feature = "std")]
+mod threadsafe_pooled_iter;
+
+// TODO: adapter for cursor traits and `Seekable` that applies `Borrow::borrow` to input keys.
+// Note sure if it's useful though.
 
 #[cfg(feature = "lender")]
 mod lender_adapter;
@@ -60,7 +87,7 @@ pub use self::{
     cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator},
     lending_iterator_support::{ImplyBound, LendItem, LentItem},
     pooled::{OutOfBuffers, PooledIterator},
-    seekable::Seekable,
+    seekable::{ItemToKey, Seekable},
     seekable_iterators::{SeekableIterator, SeekableLendingIterator, SeekablePooledIterator},
 };
 
@@ -68,3 +95,10 @@ pub use self::{
 pub use self::lender_adapter::{LenderAdapter, PooledLenderAdapter};
 #[cfg(feature = "lending-iterator")]
 pub use self::lending_iterator_adapter::{LendingIteratorAdapter, PooledLendingIteratorAdapter};
+
+#[cfg(feature = "alloc")]
+pub use self::merging_iter::MergingIter;
+#[cfg(feature = "alloc")]
+pub use self::pooled_iter::{PooledIter, PoolItem};
+#[cfg(feature = "std")]
+pub use self::threadsafe_pooled_iter::{ThreadsafePooledIter, ThreadsafePoolItem};

@@ -15,12 +15,14 @@ license      = "MIT OR Apache-2.0"
 
 [dependencies]
 clone-behavior      = { version = "0.0.1", default-features = false, optional = true }
-generic-container   = { version = "0.2.1", default-features = false, optional = true }
+generic-container   = { version = "0.2.2", default-features = false, optional = true }
 lender              = { version = "0.3.2", default-features = false, optional = true }
 lending-iterator    = { version = "0.1.7", default-features = false, optional = true }
 
 [features]
 default = ["clone-behavior", "generic-container"]
+std     = ["alloc", "generic-container/std"]
+alloc   = ["generic-container/alloc", "generic-container/kinds"]
 
 
 # Out of the lints that do anything (non-deprecated clippy lints, non-migration rust lints),

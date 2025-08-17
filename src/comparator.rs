@@ -8,7 +8,8 @@ use generic_container::{FragileContainer, GenericContainer};
 
 /// Interface for comparing keys (or entries) of a sorted collection.
 ///
-/// The comparison function should provide a total order, just as [`Ord`] would.
+/// The comparison function should provide a total order, just as [`Ord`] would. Additionally,
+/// any clones of a comparator value should behave identically to the source comparator.
 ///
 /// Note that none of the axioms that define a total order require that two elements which compare
 /// as equal are "*truly*" equal in some more fundamental sense; that is, keys which are distinct
