@@ -4,7 +4,7 @@
 
 [<img alt="github" src="https://img.shields.io/badge/github-seekable--iterator-08f?logo=github" height="20">](https://github.com/robofinch/seekable-iterator/)
 [![Latest version](https://img.shields.io/crates/v/seekable-iterator.svg)](https://crates.io/crates/seekable-iterator)
-[![Documentation](https://img.shields.io/docsrs/thread-checked-lock)](https://docs.rs/seekable-iterator/0)
+[![Documentation](https://img.shields.io/docsrs/seekable-iterator)](https://docs.rs/seekable-iterator/0)
 [![Apache 2.0 or MIT license.](https://img.shields.io/badge/license-Apache--2.0_OR_MIT-blue.svg)](#license)
 
 # Traits

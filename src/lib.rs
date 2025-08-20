@@ -1,8 +1,8 @@
 // See https://linebender.org/blog/doc-include for this README inclusion strategy
 // File links are not supported by rustdoc
 //!
-//! [LICENSE-APACHE]: https://github.com/robofinch/generic-container/blob/main/LICENSE-APACHE
-//! [LICENSE-MIT]: https://github.com/robofinch/generic-container/blob/main/LICENSE-MIT
+//! [LICENSE-APACHE]: https://github.com/robofinch/seekable-iterator/blob/main/LICENSE-APACHE
+//! [LICENSE-MIT]: https://github.com/robofinch/seekable-iterator/blob/main/LICENSE-MIT
 //!
 //! [`PooledIterator`]: PooledIterator
 //!
