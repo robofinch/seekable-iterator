@@ -68,7 +68,7 @@ mod lending_iterator_support;
 
 #[cfg(feature = "alloc")]
 mod merging_iter;
-#[cfg(feature = "alloc")]
+#[cfg(feature = "std")]
 mod pooled_iter;
 #[cfg(feature = "std")]
 mod threadsafe_pooled_iter;
@@ -98,7 +98,8 @@ pub use self::lending_iterator_adapter::{LendingIteratorAdapter, PooledLendingIt
 
 #[cfg(feature = "alloc")]
 pub use self::merging_iter::MergingIter;
-#[cfg(feature = "alloc")]
-pub use self::pooled_iter::{PooledIter, PoolItem};
 #[cfg(feature = "std")]
-pub use self::threadsafe_pooled_iter::{ThreadsafePooledIter, ThreadsafePoolItem};
+pub use self::{
+    pooled_iter::{PooledIter, PoolItem},
+    threadsafe_pooled_iter::{ThreadsafePooledIter, ThreadsafePoolItem},
+};

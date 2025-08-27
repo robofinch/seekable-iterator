@@ -49,11 +49,14 @@ keys that implement [`Ord`], using their [`Ord`] implementation.
   `Comparator` implementation.
 - `lender`: provide adapters to [`lender::Lender`].
 - `lending-iterator`: provide adapters to [`lending_iterator::LendingIterator`].
-- `alloc`: provide [`MergingIter`] and [`PooledIter`]. [`MergingIter`] merges together several
+- `alloc`: provide [`MergingIter`], which merges together several
   [`SeekableLendingIterator`]s into one [`SeekableLendingIterator`] that iterates over all their
   items. Note: `alloc` isn't truly crucial for `MergingIter`; open an issue if you want it on
-  no-alloc. [`PooledIter`] is an adapter [`CursorLendingIterator`] to [`CursorPooledIterator`].
-- `std`: provide [`ThreadsafePooledIter`], a `Send + Sync` version of [`PooledIter`].
+  no-alloc.
+- `std`: provide [`PooledIter`] and [`ThreadsafePooledIter`]. [`PooledIter`] is an adapter
+  from [`CursorLendingIterator`] to [`CursorPooledIterator`], and [`ThreadsafePooledIter`] is a
+  `Send + Sync` version. `std` isn't truly crucial for [`PooledIter`]; open an issue if you want
+  it on no-std with alloc.
 
 ## License
 

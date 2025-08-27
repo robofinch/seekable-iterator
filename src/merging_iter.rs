@@ -434,3 +434,6 @@ where
         self.direction = Direction::Backwards;
     }
 }
+
+
+// TODO: a bunch of tests

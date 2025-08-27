@@ -3,6 +3,12 @@
 version = 4
 
 [[package]]
+name = "anchored-pool"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12d6fe3955929f1f6844bb169331d8fb1956962135c2f5cbaad4ea1fdb2de63b"
+
+[[package]]
 name = "clone-behavior"
 version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -157,6 +163,7 @@ dependencies = [
 name = "seekable-iterator"
 version = "0.3.1"
 dependencies = [
+ "anchored-pool",
  "clone-behavior",
  "generic-container",
  "lender",
