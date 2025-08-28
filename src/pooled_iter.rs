@@ -279,14 +279,16 @@ mod tests {
         drop(first);
 
         assert!(iter.next().is_none());
-        iter.prev();
 
-        for i in (0..9).rev() {
+        for i in (0..=9).rev() {
             let current = iter.current();
             let prev = iter.prev().unwrap();
 
-            // Both of the two buffers are in use
-            assert!(iter.try_next().is_err());
+            if current.is_some() {
+                // Both of the two buffers are in use
+                assert!(iter.try_next().is_err());
+            }
+
             assert!(iter.valid());
 
             // This drops `current`
