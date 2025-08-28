@@ -43,8 +43,7 @@ enum Direction {
 ///
 /// However, switching between `next` and `prev` will return at least one but not necessarily all of
 /// the items with the key returned by [`MergingIter::current`] at the time of the switch in
-/// direction. Note, though, that no key is _ever_ skipped, regardless of whether duplicate keys
-/// are present.
+/// direction.
 ///
 /// To be precise, the items with duplicate keys may be skipped whenever the `MergingIter` changes
 /// which "direction" (forwards or backwards) that it is iterating in. When switching direction,
@@ -436,4 +435,436 @@ where
 }
 
 
-// TODO: a bunch of tests
+#[cfg(test)]
+mod tests {
+    use alloc::vec;
+    use crate::{comparator::DefaultComparator, test_iter::TestIter};
+    use super::*;
+
+    /// The iterator must iterate over `[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]`
+    fn iteration_without_duplicates(iter: &mut MergingIter<u8, DefaultComparator, TestIter<'_>>) {
+        assert_eq!(*iter.next().unwrap(), 0);
+
+        for i in 1..=9 {
+            assert!(iter.valid());
+            let next = iter.next().unwrap();
+            assert_eq!(*next, i);
+        }
+
+        assert!(iter.next().is_none());
+
+        for i in (0..=9).rev() {
+            let current = iter.current().copied();
+            let prev = *iter.prev().unwrap();
+            assert!(!current.is_some_and(|curr| curr == prev));
+
+            assert!(iter.valid());
+
+            let new_current = iter.current().unwrap();
+
+            assert_eq!(prev, i);
+            assert_eq!(*new_current, i);
+        }
+
+        iter.seek_before(&4);
+        for i in 4..=9 {
+            assert_eq!(*iter.next().unwrap(), i);
+        }
+        assert!(iter.next().is_none());
+
+        iter.seek(&5);
+        for i in (0..=4).rev() {
+            assert_eq!(*iter.prev().unwrap(), i);
+        }
+        assert!(iter.prev().is_none());
+    }
+
+    /// `merged_data` must have the following unique elements:
+    /// `[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99]`.
+    ///
+    /// There may be duplicates.
+    fn seek_tests(
+        merged_data: &[u8],
+        iter:        &mut MergingIter<u8, DefaultComparator, TestIter<'_>>,
+    ) {
+        assert!(merged_data.is_sorted());
+
+        iter.reset();
+        let mut data_iter = merged_data.iter();
+        while let Some(item) = iter.next() {
+            assert_eq!(item, data_iter.next().unwrap());
+        }
+        assert!(data_iter.next().is_none());
+
+
+        iter.seek_to_first();
+        assert_eq!(*iter.current().unwrap(), 0);
+
+        iter.seek(&1);
+        assert_eq!(*iter.current().unwrap(), 1);
+
+        iter.seek(&8);
+        assert_eq!(*iter.current().unwrap(), 8);
+
+        iter.seek(&10);
+        assert_eq!(*iter.current().unwrap(), 99);
+
+        iter.seek_before(&92);
+        assert_eq!(*iter.current().unwrap(), 9);
+
+        iter.seek(&9);
+        assert_eq!(*iter.current().unwrap(), 9);
+
+        iter.seek_before(&99);
+        assert_eq!(*iter.current().unwrap(), 9);
+
+        iter.seek_before(&100);
+        assert_eq!(*iter.current().unwrap(), 99);
+
+        iter.seek_before(&1);
+        assert_eq!(*iter.current().unwrap(), 0);
+
+        iter.seek_before(&0);
+        assert!(!iter.valid());
+
+        iter.seek(&100);
+        assert!(!iter.valid());
+
+        iter.seek(&99);
+        assert_eq!(*iter.current().unwrap(), 99);
+
+        iter.seek_to_last();
+        assert_eq!(*iter.current().unwrap(), 99);
+
+        iter.seek(&0);
+        assert_eq!(*iter.current().unwrap(), 0);
+
+        iter.seek_before(&4);
+        assert_eq!(*iter.current().unwrap(), 3);
+    }
+
+    #[test]
+    fn single_merged() {
+        let data: &[u8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].as_slice();
+        let mut iter = MergingIter::new(vec![TestIter::new(data).unwrap()], DefaultComparator);
+
+        iteration_without_duplicates(&mut iter);
+    }
+
+    #[test]
+    fn seek_single_merged() {
+        let data: &[u8] = [0, 1, 2, 3, 4, 4, 4, 4, 4, 4, 5, 6, 7, 8, 9, 99].as_slice();
+        let mut iter = MergingIter::new(vec![TestIter::new(data).unwrap()], DefaultComparator);
+
+        seek_tests(data, &mut iter);
+    }
+
+    #[test]
+    fn three_merged_interleaved() {
+        let data_one:    &[u8] = [0, 3, 6, 7].as_slice();
+        let data_two:    &[u8] = [1, 5, 8].as_slice();
+        let data_three:  &[u8] = [2, 4, 9].as_slice();
+        let mut iter = MergingIter::new(
+            vec![
+                TestIter::new(data_one).unwrap(),
+                TestIter::new(data_two).unwrap(),
+                TestIter::new(data_three).unwrap(),
+            ],
+            DefaultComparator,
+        );
+
+        iteration_without_duplicates(&mut iter);
+    }
+
+    #[test]
+    fn seek_three_merged_interleaved() {
+        let data_one:    &[u8] = [0, 3, 6, 7].as_slice();
+        let data_two:    &[u8] = [1, 5, 8].as_slice();
+        let data_three:  &[u8] = [2, 4, 9, 99].as_slice();
+        let merged_data: &[u8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99].as_slice();
+        let mut iter = MergingIter::new(
+            vec![
+                TestIter::new(data_one).unwrap(),
+                TestIter::new(data_two).unwrap(),
+                TestIter::new(data_three).unwrap(),
+            ],
+            DefaultComparator,
+        );
+
+        seek_tests(merged_data, &mut iter);
+    }
+
+    #[test]
+    fn three_merged_chained() {
+        let data_one:    &[u8] = [0, 1, 2, 3].as_slice();
+        let data_two:    &[u8] = [7, 8, 9].as_slice();
+        let data_three:  &[u8] = [4, 5, 6].as_slice();
+        let mut iter = MergingIter::new(
+            vec![
+                TestIter::new(data_one).unwrap(),
+                TestIter::new(data_two).unwrap(),
+                TestIter::new(data_three).unwrap(),
+            ],
+            DefaultComparator,
+        );
+
+        iteration_without_duplicates(&mut iter);
+    }
+
+    #[test]
+    fn seek_three_merged_chained() {
+        let data_one:    &[u8] = [0, 1, 2, 3].as_slice();
+        let data_two:    &[u8] = [7, 8, 9, 99].as_slice();
+        let data_three:  &[u8] = [4, 5, 6].as_slice();
+        let merged_data: &[u8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99].as_slice();
+        let mut iter = MergingIter::new(
+            vec![
+                TestIter::new(data_one).unwrap(),
+                TestIter::new(data_two).unwrap(),
+                TestIter::new(data_three).unwrap(),
+            ],
+            DefaultComparator,
+        );
+
+        seek_tests(merged_data, &mut iter);
+    }
+
+    /// The things this test checks can be relied on by users, but are edge cases
+    #[test]
+    fn single_duplicates_defined() {
+        let data = &[1, 2, 2, 2, 2, 3];
+        let mut iter = MergingIter::new(
+            vec![
+                TestIter::new(data).unwrap(),
+            ],
+            DefaultComparator,
+        );
+
+        let mut data_iter = data.iter();
+        while let Some(item) = iter.next() {
+            assert_eq!(item, data_iter.next().unwrap());
+        }
+        assert!(data_iter.next().is_none());
+
+        let mut data_iter = data.iter().rev();
+        while let Some(item) = iter.prev() {
+            assert_eq!(item, data_iter.next().unwrap());
+        }
+        assert!(data_iter.next().is_none());
+
+        iter.seek(&1);
+        for _ in 0..4 {
+            assert_eq!(iter.next(), Some(&2));
+        }
+
+        iter.seek_before(&3);
+        for _ in 0..4 {
+            assert_eq!(iter.current(), Some(&2));
+            iter.prev();
+        }
+    }
+
+    /// This test checks an implementation detail that users should not rely on
+    #[test]
+    fn single_duplicates_unspecified() {
+        let data = &[1, 2, 2, 2, 2, 3];
+        let mut iter = MergingIter::new(
+            vec![
+                TestIter::new(data).unwrap(),
+            ],
+            DefaultComparator,
+        );
+
+        for advance in 1..=4 {
+            iter.seek(&1);
+            for _ in 0..advance {
+                assert_eq!(iter.next(), Some(&2));
+            }
+            for _ in 0..advance {
+                assert_eq!(iter.current(), Some(&2));
+                iter.prev();
+            }
+        }
+    }
+
+    /// The things this test checks can be relied on by users, but are edge cases
+    #[test]
+    fn two_duplicates_defined() {
+        let data_one    = &[1, 2, 2, 3];
+        let data_two    = &[0, 2, 2, 5];
+        let merged_data = &[0, 1, 2, 2, 2, 2, 3, 5];
+        let mut iter = MergingIter::new(
+            vec![
+                TestIter::new(data_one).unwrap(),
+                TestIter::new(data_two).unwrap(),
+            ],
+            DefaultComparator,
+        );
+
+        let mut data_iter = merged_data.iter();
+        while let Some(item) = iter.next() {
+            assert_eq!(item, data_iter.next().unwrap());
+        }
+        assert!(data_iter.next().is_none());
+
+        let mut data_iter = merged_data.iter().rev();
+        while let Some(item) = iter.prev() {
+            assert_eq!(item, data_iter.next().unwrap());
+        }
+        assert!(data_iter.next().is_none());
+
+        iter.seek(&1);
+        for _ in 0..4 {
+            assert_eq!(iter.next(), Some(&2));
+        }
+
+        iter.seek_before(&3);
+        for _ in 0..4 {
+            assert_eq!(iter.current(), Some(&2));
+            iter.prev();
+        }
+    }
+
+    /// The things this test checks can be relied on by users, but are edge cases
+    #[test]
+    fn seek_two_duplicates_defined() {
+        let data_one    = &[1, 2, 2, 3];
+        let data_two    = &[0, 2, 2, 5];
+        let mut iter = MergingIter::new(
+            vec![
+                TestIter::new(data_one).unwrap(),
+                TestIter::new(data_two).unwrap(),
+            ],
+            DefaultComparator,
+        );
+
+        iter.seek_to_first();
+        assert_eq!(*iter.current().unwrap(), 0);
+
+        iter.seek(&1);
+        assert_eq!(*iter.current().unwrap(), 1);
+
+        iter.seek(&3);
+        assert_eq!(*iter.current().unwrap(), 3);
+
+        iter.seek(&4);
+        assert_eq!(*iter.current().unwrap(), 5);
+
+        iter.seek_before(&4);
+        assert_eq!(*iter.current().unwrap(), 3);
+
+        iter.seek(&5);
+        assert_eq!(*iter.current().unwrap(), 5);
+
+        iter.seek_before(&2);
+        assert_eq!(*iter.current().unwrap(), 1);
+
+        iter.seek_before(&5);
+        assert_eq!(*iter.current().unwrap(), 3);
+
+        iter.seek_before(&1);
+        assert_eq!(*iter.current().unwrap(), 0);
+        assert_eq!(*iter.next().unwrap(), 1);
+        assert_eq!(*iter.next().unwrap(), 2);
+
+        iter.seek_before(&0);
+        assert!(!iter.valid());
+
+        iter.seek(&100);
+        assert!(!iter.valid());
+
+        iter.seek(&2);
+        assert_eq!(*iter.current().unwrap(), 2);
+
+        iter.seek(&3);
+        assert_eq!(*iter.current().unwrap(), 3);
+        assert_eq!(*iter.prev().unwrap(), 2);
+
+        iter.seek_before(&2);
+        assert_eq!(*iter.current().unwrap(), 1);
+
+        iter.seek_to_last();
+        assert_eq!(*iter.current().unwrap(), 5);
+
+        iter.seek_before(&2);
+        assert_eq!(*iter.current().unwrap(), 1);
+        assert_eq!(*iter.next().unwrap(), 2);
+
+        iter.seek(&2);
+        assert_eq!(*iter.current().unwrap(), 2);
+    }
+
+    /// This test checks an implementation detail that users should not rely on
+    #[test]
+    fn two_duplicates_unspecified() {
+        let data_one    = &[1, 2, 2, 3];
+        let data_two    = &[0, 2, 2, 5];
+        let mut iter = MergingIter::new(
+            vec![
+                TestIter::new(data_one).unwrap(),
+                TestIter::new(data_two).unwrap(),
+            ],
+            DefaultComparator,
+        );
+
+        assert_eq!(*iter.next().unwrap(), 0);
+        assert_eq!(*iter.next().unwrap(), 1);
+
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 2);
+
+        // Hard to predict / unspecified as far as this library is concerned
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 1);
+
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 2);
+
+        // Hard to predict / unspecified as far as this library is concerned
+        assert_eq!(*iter.prev().unwrap(), 1);
+
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 2);
+
+        assert_eq!(*iter.next().unwrap(), 3);
+
+        // This should be certain
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 1);
+
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 2);
+
+        // Hard to predict / unspecified as far as this library is concerned
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 1);
+
+        iter.seek(&3);
+        // This should be certain
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 1);
+
+        iter.seek(&3);
+
+        // This should be certain
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 2);
+        assert_eq!(*iter.prev().unwrap(), 2);
+
+        // Hard to predict / unspecified as far as this library is concerned
+        assert_eq!(*iter.next().unwrap(), 2);
+        assert_eq!(*iter.next().unwrap(), 3);
+    }
+}
