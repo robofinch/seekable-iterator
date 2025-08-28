@@ -68,5 +68,8 @@ clippy *args:
                 -Wunqualified_local_imports" cargo +nightly hack clippy --feature-powerset {{args}}
     cargo {{plus-msrv}} hack clippy --feature-powerset {{args}}
 
+test:
+    cargo +stable test --all-features
+
 [group("on-save")]
 on-save: (clippy "--message-format=json")

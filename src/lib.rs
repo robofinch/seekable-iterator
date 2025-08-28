@@ -73,6 +73,9 @@ mod pooled_iter;
 #[cfg(feature = "std")]
 mod threadsafe_pooled_iter;
 
+#[cfg(test)]
+mod test_iter;
+
 // TODO: adapter for cursor traits and `Seekable` that applies `Borrow::borrow` to input keys.
 // Note sure if it's useful though.
 

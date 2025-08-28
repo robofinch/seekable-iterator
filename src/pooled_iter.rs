@@ -27,12 +27,16 @@ use crate::{
 /// is running, for example, unlike with the `ThreadsafePooledIter` type. Therefore, `PooledIter`
 /// panics in such a scenario.
 #[derive(Debug)]
-pub struct PooledIter<I, OwnedItem> {
+pub struct PooledIter<I, BorrowedItem: ToOwned> {
     iter: I,
-    pool: BoundedPool<OwnedItem, ResetNothing>,
+    pool: BoundedPool<BorrowedItem::Owned, ResetNothing>,
 }
 
-impl<I, OwnedItem: Default> PooledIter<I, OwnedItem> {
+impl<I, BorrowedItem> PooledIter<I, BorrowedItem>
+where
+    BorrowedItem:        ToOwned,
+    BorrowedItem::Owned: Default,
+{
     /// Create a `PooledIter` that can lend out up to `num_buffers` items at a time.
     ///
     /// The user of a `PooledIter` is required not to attempt to get more than `num_buffers`
@@ -48,45 +52,33 @@ impl<I, OwnedItem: Default> PooledIter<I, OwnedItem> {
     }
 }
 
-impl<I, OwnedItem> PooledIter<I, OwnedItem>
+impl<I, BorrowedItem> PooledIter<I, BorrowedItem>
 where
-    I: CursorLendingIterator,
-    for<'lend> LentItem<'lend, I>: ToOwned<Owned = OwnedItem>,
+    I:                             CursorLendingIterator,
+    BorrowedItem:                  ToOwned,
+    for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
 {
     /// # Panics
     /// Panics if there are no buffers available.
     #[expect(clippy::needless_pass_by_value, reason = "lent item usually consists of references")]
     #[inline]
     fn fill_buffer(
-        pool: &BoundedPool<OwnedItem, ResetNothing>,
+        pool: &BoundedPool<BorrowedItem::Owned, ResetNothing>,
         item: LentItem<'_, I>,
-    ) -> PoolItem<OwnedItem> {
+    ) -> PoolItem<BorrowedItem::Owned> {
         let mut pool_item = pool.get();
-        item.clone_into(&mut pool_item);
+        item.borrow().clone_into(&mut pool_item);
         PoolItem(pool_item)
-    }
-
-    #[expect(clippy::needless_pass_by_value, reason = "lent item usually consists of references")]
-    #[inline]
-    fn try_fill_buffer(
-        pool: &BoundedPool<OwnedItem, ResetNothing>,
-        item: LentItem<'_, I>,
-    ) -> Result<PoolItem<OwnedItem>, OutOfBuffers> {
-        pool.try_get()
-            .map(|mut pool_item| {
-                item.clone_into(&mut pool_item);
-                PoolItem(pool_item)
-            })
-            .map_err(|ResourcePoolEmpty| OutOfBuffers)
     }
 }
 
-impl<I, OwnedItem> PooledIterator for PooledIter<I, OwnedItem>
+impl<I, BorrowedItem> PooledIterator for PooledIter<I, BorrowedItem>
 where
-    I: CursorLendingIterator,
-    for<'lend> LentItem<'lend, I>: ToOwned<Owned = OwnedItem>,
+    I:                             CursorLendingIterator,
+    BorrowedItem:                  ToOwned,
+    for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
 {
-    type Item = PoolItem<OwnedItem>;
+    type Item = PoolItem<BorrowedItem::Owned>;
 
     /// Move the iterator one position forwards, and return the entry at that position.
     /// Returns `None` if the iterator was at the last entry.
@@ -98,8 +90,12 @@ where
     }
 
     fn try_next(&mut self) -> Result<Option<Self::Item>, OutOfBuffers> {
+        let mut buffer = self.pool.try_get()
+            .map_err(|ResourcePoolEmpty| OutOfBuffers)?;
+
         if let Some(item) = self.iter.next() {
-            Self::try_fill_buffer(&self.pool, item).map(Some)
+            item.borrow().clone_into(&mut buffer);
+            Ok(Some(PoolItem(buffer)))
         } else {
             Ok(None)
         }
@@ -115,10 +111,11 @@ where
     }
 }
 
-impl<I, OwnedItem> CursorPooledIterator for PooledIter<I, OwnedItem>
+impl<I, BorrowedItem> CursorPooledIterator for PooledIter<I, BorrowedItem>
 where
-    I: CursorLendingIterator,
-    for<'lend> LentItem<'lend, I>: ToOwned<Owned = OwnedItem>,
+    I:                             CursorLendingIterator,
+    BorrowedItem:                  ToOwned,
+    for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
 {
     #[inline]
     fn valid(&self) -> bool {
@@ -137,8 +134,12 @@ where
     }
 
     fn try_current(&self) -> Result<Option<Self::Item>, OutOfBuffers> {
+        let mut buffer = self.pool.try_get()
+            .map_err(|ResourcePoolEmpty| OutOfBuffers)?;
+
         if let Some(item) = self.iter.current() {
-            Self::try_fill_buffer(&self.pool, item).map(Some)
+            item.borrow().clone_into(&mut buffer);
+            Ok(Some(PoolItem(buffer)))
         } else {
             Ok(None)
         }
@@ -157,20 +158,25 @@ where
     }
 
     fn try_prev(&mut self) -> Result<Option<Self::Item>, OutOfBuffers> {
+        let mut buffer = self.pool.try_get()
+            .map_err(|ResourcePoolEmpty| OutOfBuffers)?;
+
         if let Some(item) = self.iter.prev() {
-            Self::try_fill_buffer(&self.pool, item).map(Some)
+            item.borrow().clone_into(&mut buffer);
+            Ok(Some(PoolItem(buffer)))
         } else {
             Ok(None)
         }
     }
 }
 
-impl<I, OwnedItem, Key, Cmp> Seekable<Key, Cmp> for PooledIter<I, OwnedItem>
+impl<I, BorrowedItem, Key, Cmp> Seekable<Key, Cmp> for PooledIter<I, BorrowedItem>
 where
-    I:   CursorLendingIterator + Seekable<Key, Cmp>,
-    Key: ?Sized,
-    Cmp: Comparator<Key>,
-    for<'lend> LentItem<'lend, I>: ToOwned<Owned = OwnedItem>,
+    I:                             CursorLendingIterator + Seekable<Key, Cmp>,
+    BorrowedItem:                  ToOwned,
+    Key:                           ?Sized,
+    Cmp:                           Comparator<Key>,
+    for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
 {
     #[inline]
     fn reset(&mut self) {
@@ -247,4 +253,94 @@ impl<OwnedItem> AsMut<OwnedItem> for PoolItem<OwnedItem> {
     }
 }
 
-// TODO: a bunch of tests
+
+#[cfg(test)]
+mod tests {
+    use crate::test_iter::TestIter;
+    use super::*;
+
+
+    #[test]
+    fn pooled_test_iter() {
+        let data: &[u8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].as_slice();
+        let mut iter = PooledIter::<_, u8>::new(TestIter::new(data).unwrap(), 2);
+
+        // Hold one buffer the entire time
+        let first = iter.next().unwrap();
+        assert_eq!(*first, 0);
+
+        for i in 1..=9 {
+            assert!(iter.valid());
+            let next = iter.next().unwrap();
+            // Both of the two buffers are in use
+            assert!(iter.try_next().is_err());
+            assert_eq!(*next, i);
+        }
+        drop(first);
+
+        for i in (0..9).rev() {
+            let current = iter.current();
+            let prev = iter.prev().unwrap();
+
+            // Both of the two buffers are in use
+            assert!(iter.try_next().is_err());
+            assert!(iter.valid());
+
+            // This drops `current`
+            assert!(!current.is_some_and(|curr| *curr == *prev));
+
+            let new_current = iter.current().unwrap();
+
+            assert_eq!(*prev, i);
+            assert_eq!(*new_current, i);
+        }
+    }
+
+    #[test]
+    fn seek_test() {
+        let data: &[u8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99].as_slice();
+        let mut iter = PooledIter::<_, u8>::new(TestIter::new(data).unwrap(), 1);
+
+        iter.seek_to_first();
+        assert_eq!(*iter.current().unwrap(), 0);
+
+        iter.seek(&0);
+        assert_eq!(*iter.current().unwrap(), 0);
+
+        iter.seek(&1);
+        assert_eq!(*iter.current().unwrap(), 1);
+
+        iter.seek(&9);
+        assert_eq!(*iter.current().unwrap(), 9);
+
+        iter.seek(&8);
+        assert_eq!(*iter.current().unwrap(), 8);
+
+        iter.seek(&10);
+        assert_eq!(*iter.current().unwrap(), 99);
+
+        iter.seek_before(&92);
+        assert_eq!(*iter.current().unwrap(), 9);
+
+        iter.seek_before(&99);
+        assert_eq!(*iter.current().unwrap(), 9);
+
+        iter.seek_before(&100);
+        assert_eq!(*iter.current().unwrap(), 99);
+
+        iter.seek_before(&1);
+        assert_eq!(*iter.current().unwrap(), 0);
+
+        iter.seek_before(&0);
+        assert!(!iter.valid());
+
+        iter.seek(&100);
+        assert!(!iter.valid());
+
+        iter.seek(&99);
+        assert_eq!(*iter.current().unwrap(), 99);
+
+        iter.seek_to_last();
+        assert_eq!(*iter.current().unwrap(), 99);
+    }
+}
