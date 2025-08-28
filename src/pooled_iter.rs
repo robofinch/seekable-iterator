@@ -27,6 +27,7 @@ use crate::{
 /// is running, for example, unlike with the `ThreadsafePooledIter` type. Therefore, `PooledIter`
 /// panics in such a scenario.
 #[derive(Debug)]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub struct PooledIter<I, BorrowedItem: ToOwned> {
     iter: I,
     pool: BoundedPool<BorrowedItem::Owned, ResetNothing>,
@@ -205,6 +206,7 @@ where
 ///
 /// The owned item buffer is returned to [`PooledIter`] when the `PoolItem` is dropped.
 #[derive(Debug)]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub struct PoolItem<OwnedItem>(
     PooledResource<BoundedPool<OwnedItem, ResetNothing>, OwnedItem>,
 );

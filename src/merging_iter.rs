@@ -69,6 +69,7 @@ enum Direction {
 /// - [`MergingIter::valid`]
 /// - [`MergingIter::current`]
 #[derive(Debug)]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub struct MergingIter<Key: ?Sized, Cmp, Iter> {
     iterators:    Vec<Iter>,
     cmp:          Cmp,

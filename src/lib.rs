@@ -51,6 +51,8 @@
     ),
 )]
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 #![no_std]
 
 #[cfg(feature = "alloc")]
@@ -95,13 +97,17 @@ pub use self::{
 };
 
 #[cfg(feature = "lender")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lender")))]
 pub use self::lender_adapter::{LenderAdapter, PooledLenderAdapter};
 #[cfg(feature = "lending-iterator")]
+#[cfg_attr(docsrs, doc(cfg(feature = "lending-iterator")))]
 pub use self::lending_iterator_adapter::{LendingIteratorAdapter, PooledLendingIteratorAdapter};
 
 #[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub use self::merging_iter::MergingIter;
 #[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub use self::{
     pooled_iter::{PooledIter, PoolItem},
     threadsafe_pooled_iter::{ThreadsafePooledIter, ThreadsafePoolItem},

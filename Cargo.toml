@@ -198,3 +198,6 @@ significant_drop_tightening         = "allow"
 
 [lints.rustdoc]
 all = { level = "warn", priority = -1 }
+
+[package.metadata.docs.rs]
+all-features = true

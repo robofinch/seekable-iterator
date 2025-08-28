@@ -1,4 +1,4 @@
-# Not implemented: (test-all) (build-all) (bench-all)
+# Not implemented: (build-all) (bench-all)
 
 list:
     just --list
@@ -70,6 +70,9 @@ clippy *args:
 
 test:
     cargo +stable test --all-features
+
+doc:
+    RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features
 
 [group("on-save")]
 on-save: (clippy "--message-format=json")

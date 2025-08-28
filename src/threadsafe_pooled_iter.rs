@@ -21,6 +21,7 @@ use crate::{
 /// into buffers, and in memory usage. The costs of allocating buffers is likely amortized by
 /// their reuse.
 #[derive(Debug)]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub struct ThreadsafePooledIter<I, BorrowedItem: ToOwned> {
     iter: I,
     pool: SharedBoundedPool<BorrowedItem::Owned, ResetNothing>,
@@ -205,6 +206,7 @@ where
 /// The owned item buffer is returned to the [`ThreadsafePooledIter`] when the
 /// `ThreadsafePoolItem` is dropped.
 #[derive(Debug)]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub struct ThreadsafePoolItem<OwnedItem>(
     PooledResource<SharedBoundedPool<OwnedItem, ResetNothing>, OwnedItem>,
 );

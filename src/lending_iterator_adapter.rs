@@ -12,6 +12,7 @@ use crate::cursor::{CursorLendingIterator, CursorPooledIterator};
 /// the other cursor methods (`valid`, `current`, `prev`) are implemented, and [`Seekable`]
 /// is implemented if `I: Seekable`.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(docsrs, doc(cfg(feature = "lending-iterator")))]
 pub struct LendingIteratorAdapter<I>(I);
 
 impl<I> LendingIteratorAdapter<I> {
@@ -68,6 +69,7 @@ delegate_seekable!(LendingIteratorAdapter.0);
 /// (`valid`, `current`, `prev`) are implemented if `I: CursorPooledIterator`, and [`Seekable`]
 /// is implemented if `I: Seekable`.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(docsrs, doc(cfg(feature = "lending-iterator")))]
 pub struct PooledLendingIteratorAdapter<I: PooledIterator> {
     iter: I,
     item: Option<I::Item>,
