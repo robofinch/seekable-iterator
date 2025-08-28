@@ -278,6 +278,9 @@ mod tests {
         }
         drop(first);
 
+        assert!(iter.next().is_none());
+        iter.prev();
+
         for i in (0..9).rev() {
             let current = iter.current();
             let prev = iter.prev().unwrap();
@@ -298,7 +301,7 @@ mod tests {
 
     #[test]
     fn seek_test() {
-        let data: &[u8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 99].as_slice();
+        let data: &[u8] = [0, 1, 2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 7, 8, 9, 99].as_slice();
         let mut iter = PooledIter::<_, u8>::new(TestIter::new(data).unwrap(), 1);
 
         iter.seek_to_first();
@@ -342,5 +345,8 @@ mod tests {
 
         iter.seek_to_last();
         assert_eq!(*iter.current().unwrap(), 99);
+
+        iter.seek_before(&4);
+        assert_eq!(*iter.current().unwrap(), 3);
     }
 }

@@ -7,20 +7,16 @@ use crate::{
 };
 
 
+/// An inefficient but functional seekable lending iterator over a byte slice.
 pub(crate) struct TestIter<'a> {
     data:   &'a [u8],
     cursor: Option<usize>,
 }
 
 impl<'a> TestIter<'a> {
-    /// Checks that `data` is sorted and has no duplicate elements.
+    /// Checks that `data` is sorted.
     pub(crate) fn new(data: &'a [u8]) -> Option<Self> {
-        #[expect(
-            clippy::indexing_slicing,
-            clippy::missing_asserts_for_indexing,
-            reason = "window size is 2",
-        )]
-        if data.is_sorted() && data.windows(2).all(|window| window[0] != window[1]) {
+        if data.is_sorted() {
             Some(Self {
                 data,
                 cursor: None,
@@ -103,6 +99,10 @@ impl Seekable<u8, DefaultComparator> for TestIter<'_> {
             Ok(found)      => found,
             Err(following) => following,
         }.checked_sub(1);
+
+        while self.current().is_some_and(|current| current >= strict_upper_bound) {
+            self.prev();
+        }
     }
 
     fn seek_to_first(&mut self) {
