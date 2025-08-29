@@ -54,15 +54,20 @@ pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
     fn seek_to_last(&mut self);
 }
 
-/// Convert one of the items of an iterator into a `Key` reference, intended for use with
-/// [`Seekable`].
+/// Convert one of the items of an iterator into a `Key` reference, intended for use with a
+/// [`SeekableLendingIterator`].
 ///
 /// This conversion is expected to be cheap.
+///
+/// [`SeekableLendingIterator`]: crate::seekable_iterators::SeekableLendingIterator
 pub trait ItemToKey<Key: ?Sized>: for<'lend> LendItem<'lend> {
     /// Convert one of the items of an iterator into a `Key` reference, intended for use with
-    /// [`Seekable`].
+    /// a [`SeekableLendingIterator`].
     ///
     /// This conversion is expected to be cheap.
+    ///
+    /// [`SeekableLendingIterator`]: crate::seekable_iterators::SeekableLendingIterator
+    #[must_use]
     fn item_to_key(item: LentItem<'_, Self>) -> &'_ Key;
 }
 

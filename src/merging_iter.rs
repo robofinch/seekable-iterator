@@ -366,6 +366,17 @@ where
     }
 }
 
+impl<Key, Cmp, Iter> ItemToKey<Key> for MergingIter<Key, Cmp, Iter>
+where
+    Key:  ?Sized,
+    Iter: ItemToKey<Key>,
+{
+    #[inline]
+    fn item_to_key(item: LentItem<'_, Self>) -> &'_ Key {
+        Iter::item_to_key(item)
+    }
+}
+
 impl<Key, Cmp, Iter> Seekable<Key, Cmp> for MergingIter<Key, Cmp, Iter>
 where
     Key:  ?Sized,
