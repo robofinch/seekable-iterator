@@ -450,11 +450,11 @@ where
 #[cfg(test)]
 mod tests {
     use alloc::vec;
-    use crate::{comparator::DefaultComparator, test_iter::TestIter};
+    use crate::{comparator::OrdComparator, test_iter::TestIter};
     use super::*;
 
     /// The iterator must iterate over `[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]`
-    fn iteration_without_duplicates(iter: &mut MergingIter<u8, DefaultComparator, TestIter<'_>>) {
+    fn iteration_without_duplicates(iter: &mut MergingIter<u8, OrdComparator, TestIter<'_>>) {
         assert_eq!(*iter.next().unwrap(), 0);
 
         for i in 1..=9 {
@@ -497,7 +497,7 @@ mod tests {
     /// There may be duplicates.
     fn seek_tests(
         merged_data: &[u8],
-        iter:        &mut MergingIter<u8, DefaultComparator, TestIter<'_>>,
+        iter:        &mut MergingIter<u8, OrdComparator, TestIter<'_>>,
     ) {
         assert!(merged_data.is_sorted());
 
@@ -558,7 +558,7 @@ mod tests {
     #[test]
     fn single_merged() {
         let data: &[u8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].as_slice();
-        let mut iter = MergingIter::new(vec![TestIter::new(data).unwrap()], DefaultComparator);
+        let mut iter = MergingIter::new(vec![TestIter::new(data).unwrap()], OrdComparator);
 
         iteration_without_duplicates(&mut iter);
     }
@@ -566,7 +566,7 @@ mod tests {
     #[test]
     fn seek_single_merged() {
         let data: &[u8] = [0, 1, 2, 3, 4, 4, 4, 4, 4, 4, 5, 6, 7, 8, 9, 99].as_slice();
-        let mut iter = MergingIter::new(vec![TestIter::new(data).unwrap()], DefaultComparator);
+        let mut iter = MergingIter::new(vec![TestIter::new(data).unwrap()], OrdComparator);
 
         seek_tests(data, &mut iter);
     }
@@ -582,7 +582,7 @@ mod tests {
                 TestIter::new(data_two).unwrap(),
                 TestIter::new(data_three).unwrap(),
             ],
-            DefaultComparator,
+            OrdComparator,
         );
 
         iteration_without_duplicates(&mut iter);
@@ -600,7 +600,7 @@ mod tests {
                 TestIter::new(data_two).unwrap(),
                 TestIter::new(data_three).unwrap(),
             ],
-            DefaultComparator,
+            OrdComparator,
         );
 
         seek_tests(merged_data, &mut iter);
@@ -617,7 +617,7 @@ mod tests {
                 TestIter::new(data_two).unwrap(),
                 TestIter::new(data_three).unwrap(),
             ],
-            DefaultComparator,
+            OrdComparator,
         );
 
         iteration_without_duplicates(&mut iter);
@@ -635,7 +635,7 @@ mod tests {
                 TestIter::new(data_two).unwrap(),
                 TestIter::new(data_three).unwrap(),
             ],
-            DefaultComparator,
+            OrdComparator,
         );
 
         seek_tests(merged_data, &mut iter);
@@ -649,7 +649,7 @@ mod tests {
             vec![
                 TestIter::new(data).unwrap(),
             ],
-            DefaultComparator,
+            OrdComparator,
         );
 
         let mut data_iter = data.iter();
@@ -684,7 +684,7 @@ mod tests {
             vec![
                 TestIter::new(data).unwrap(),
             ],
-            DefaultComparator,
+            OrdComparator,
         );
 
         for advance in 1..=4 {
@@ -710,7 +710,7 @@ mod tests {
                 TestIter::new(data_one).unwrap(),
                 TestIter::new(data_two).unwrap(),
             ],
-            DefaultComparator,
+            OrdComparator,
         );
 
         let mut data_iter = merged_data.iter();
@@ -747,7 +747,7 @@ mod tests {
                 TestIter::new(data_one).unwrap(),
                 TestIter::new(data_two).unwrap(),
             ],
-            DefaultComparator,
+            OrdComparator,
         );
 
         iter.seek_to_first();
@@ -816,7 +816,7 @@ mod tests {
                 TestIter::new(data_one).unwrap(),
                 TestIter::new(data_two).unwrap(),
             ],
-            DefaultComparator,
+            OrdComparator,
         );
 
         assert_eq!(*iter.next().unwrap(), 0);

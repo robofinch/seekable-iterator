@@ -1,6 +1,6 @@
 #![expect(clippy::redundant_pub_crate, reason = "emphasize that this is internal")]
 
-use crate::{comparator::DefaultComparator, cursor::CursorLendingIterator};
+use crate::{comparator::OrdComparator, cursor::CursorLendingIterator};
 use crate::{
     lending_iterator_support::{LendItem, LentItem},
     seekable::{ItemToKey, Seekable},
@@ -76,7 +76,7 @@ impl ItemToKey<u8> for TestIter<'_> {
     }
 }
 
-impl Seekable<u8, DefaultComparator> for TestIter<'_> {
+impl Seekable<u8, OrdComparator> for TestIter<'_> {
     fn reset(&mut self) {
         self.cursor = None;
     }

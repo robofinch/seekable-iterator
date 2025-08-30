@@ -65,9 +65,9 @@ where
 
 /// A [`Comparator`] which uses keys' [`Ord`] implementations.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct DefaultComparator;
+pub struct OrdComparator;
 
-impl<Key: ?Sized + Ord> Comparator<Key> for DefaultComparator {
+impl<Key: ?Sized + Ord> Comparator<Key> for OrdComparator {
     /// Equivalent to `Ord::cmp(lhs, rhs)`.
     #[inline]
     fn cmp(&self, lhs: &Key, rhs: &Key) -> Ordering {
@@ -76,10 +76,10 @@ impl<Key: ?Sized + Ord> Comparator<Key> for DefaultComparator {
 }
 
 #[cfg(feature = "clone-behavior")]
-impl NonRecursive for DefaultComparator {}
+impl NonRecursive for OrdComparator {}
 
 #[cfg(feature = "clone-behavior")]
-impl IndependentClone<NearInstant> for DefaultComparator {
+impl IndependentClone<NearInstant> for OrdComparator {
     #[inline]
     fn independent_clone(&self) -> Self {
         Self
@@ -87,7 +87,7 @@ impl IndependentClone<NearInstant> for DefaultComparator {
 }
 
 #[cfg(feature = "clone-behavior")]
-impl MirroredClone<NearInstant> for DefaultComparator {
+impl MirroredClone<NearInstant> for OrdComparator {
     #[inline]
     fn mirrored_clone(&self) -> Self {
         Self

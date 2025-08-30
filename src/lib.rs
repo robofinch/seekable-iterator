@@ -16,7 +16,7 @@
 //!
 //! [`Seekable`]: Seekable
 //! [`Comparator`]: Comparator
-//! [`DefaultComparator`]: DefaultComparator
+//! [`OrdComparator`]: OrdComparator
 //!
 //! [`Ord`]: Ord
 //! [`FusedIterator`]: core::iter::FusedIterator
@@ -88,7 +88,7 @@ mod lending_iterator_adapter;
 
 
 pub use self::{
-    comparator::{Comparator, DefaultComparator},
+    comparator::{Comparator, OrdComparator},
     cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator},
     lending_iterator_support::{ImplyBound, LendItem, LentItem},
     pooled::{OutOfBuffers, PooledIterator},

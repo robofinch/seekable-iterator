@@ -38,12 +38,12 @@ wraps back around to the start.
 
 The `PooledIterator` and `Cursor*Iterator` traits do not expose any comparator that the ordered
 collection and iterator might be using, but the [`Seekable`] and `Seekable*Iterator` traits _do_
-expose it via a [`Comparator`] generic. A [`DefaultComparator`] struct is provided that can compare
+expose it via a [`Comparator`] generic. An [`OrdComparator`] struct is provided that can compare
 keys that implement [`Ord`], using their [`Ord`] implementation.
 
 # Features
 
-- `clone-behavior` (enabled by default): Implements `clone-behavior` traits for `DefaultComparator`.
+- `clone-behavior` (enabled by default): Implements `clone-behavior` traits for `OrdComparator`.
 - `generic-container` (enabled by default): Implements `Comparator` for containers of
   `dyn Comparator`, and for `GenericContainer` whenever `GenericContainer` wraps a container of a
   `Comparator` implementation.
@@ -86,7 +86,7 @@ any additional terms or conditions.
 
 [`Seekable`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.Seekable.html
 [`Comparator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.Comparator.html
-[`DefaultComparator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.DefaultComparator.html
+[`OrdComparator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.OrdComparator.html
 
 [`MergingIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.MergingIter.html
 [`PooledIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.PooledIter.html
