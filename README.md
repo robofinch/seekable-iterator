@@ -53,10 +53,15 @@ keys that implement [`Ord`], using their [`Ord`] implementation.
   [`SeekableLendingIterator`]s into one [`SeekableLendingIterator`] that iterates over all their
   items. Note: `alloc` isn't truly crucial for `MergingIter`; open an issue if you want it on
   no-alloc.
-- `std`: provide [`PooledIter`] and [`ThreadsafePooledIter`]. [`PooledIter`] is an adapter
+- `std`: doesn't do much alone. Enables `alloc`, as well as the `std` feature of a dependency.
+- `anchored-pool`: provide [`PooledIter`] and [`ThreadsafePooledIter`]. [`PooledIter`] is an adapter
   from [`CursorLendingIterator`] to [`CursorPooledIterator`], and [`ThreadsafePooledIter`] is a
-  `Send + Sync` version. `std` isn't truly crucial for [`PooledIter`]; open an issue if you want
-  it on no-std with alloc.
+  `Send + Sync` version. This feature enables `std`, though `std` isn't truly crucial for
+  [`PooledIter`]; open an issue if you want it on no-std with alloc.
+- `anchored-pool-default`: same as above, and enable the default feature flags of `anchored-pool`.
+  The `anchored-pool` crate requires that either its `kanal` or `crossbeam-channel` feature is
+  enabled; using the `anchored-pool` feature flag alone will result in a compile-time error
+  unless you enable the `kanal` or `crossbeam-channel` flag yourself.
 
 ## License
 

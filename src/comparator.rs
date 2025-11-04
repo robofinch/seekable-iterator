@@ -1,7 +1,7 @@
 use core::cmp::Ordering;
 
 #[cfg(feature = "clone-behavior")]
-use clone_behavior::{IndependentClone, MirroredClone, NearInstant, NonRecursive};
+use clone_behavior::{DeepClone, MirroredClone, Speed};
 #[cfg(feature = "generic-container")]
 use generic_container::{FragileContainer, GenericContainer};
 
@@ -76,18 +76,15 @@ impl<Key: ?Sized + Ord> Comparator<Key> for OrdComparator {
 }
 
 #[cfg(feature = "clone-behavior")]
-impl NonRecursive for OrdComparator {}
-
-#[cfg(feature = "clone-behavior")]
-impl IndependentClone<NearInstant> for OrdComparator {
+impl<S: Speed> DeepClone<S> for OrdComparator {
     #[inline]
-    fn independent_clone(&self) -> Self {
+    fn deep_clone(&self) -> Self {
         Self
     }
 }
 
 #[cfg(feature = "clone-behavior")]
-impl MirroredClone<NearInstant> for OrdComparator {
+impl<S: Speed> MirroredClone<S> for OrdComparator {
     #[inline]
     fn mirrored_clone(&self) -> Self {
         Self

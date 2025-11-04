@@ -46,12 +46,12 @@ find-unsafe-code: (rg-maybe-no-match '"unsafe_code|unsafe"')
 plus-msrv := '+1.85'
 
 check *args:
-    cargo +stable hack clippy --feature-powerset {{args}}
-    cargo +nightly hack clippy --feature-powerset {{args}}
-    cargo {{plus-msrv}} hack clippy --feature-powerset {{args}}
+    cargo +stable hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
+    cargo +nightly hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
+    cargo {{plus-msrv}} hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
 
 clippy *args:
-    cargo +stable hack clippy --feature-powerset {{args}}
+    cargo +stable hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
     RUSTFLAGS="-Zcrate-attr=feature(\
                     strict_provenance_lints,\
                     must_not_suspend,\
@@ -65,8 +65,9 @@ clippy *args:
                 -Wnon_exhaustive_omitted_patterns \
                 -Wsupertrait_item_shadowing_definition \
                 -Wsupertrait_item_shadowing_usage \
-                -Wunqualified_local_imports" cargo +nightly hack clippy --feature-powerset {{args}}
-    cargo {{plus-msrv}} hack clippy --feature-powerset {{args}}
+                -Wunqualified_local_imports" \
+    cargo +nightly hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
+    cargo {{plus-msrv}} hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
 
 test:
     cargo +stable test --all-features

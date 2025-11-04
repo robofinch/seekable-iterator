@@ -5,7 +5,7 @@ description  = "Traits for iterators and lending iterators with seeking capabili
 readme       = "README.md"
 keywords     = ["seek", "iter", "cursor", "lending", "pool"]
 categories   = ["rust-patterns", "no-std", "no-std::no-alloc"]
-include      = ["Cargo.toml", "src/**/*.rs", "LICENSE-APACHE", "LICENSE-MIT"]
+include      = ["Cargo.toml", "src/**/*.rs", "LICENSE-APACHE", "LICENSE-MIT", "README.md"]
 version      = "0.3.1"
 edition      = "2024"
 rust-version = "1.85"
@@ -14,16 +14,20 @@ license      = "MIT OR Apache-2.0"
 
 
 [dependencies]
-anchored-pool       = { version = "0.1.0", default-features = false, optional = true }
-clone-behavior      = { version = "0.0.1", default-features = false, optional = true }
+anchored-pool       = { version = "0.2.0", default-features = false, optional = true }
+clone-behavior      = { version = "0.1.0", default-features = false, optional = true }
 generic-container   = { version = "0.2.2", default-features = false, optional = true }
-lender              = { version = "0.3.2", default-features = false, optional = true }
+lender              = { version = "0.4.0", default-features = false, optional = true }
 lending-iterator    = { version = "0.1.7", default-features = false, optional = true }
 
 [features]
 default = ["clone-behavior", "generic-container"]
-std     = ["alloc", "anchored-pool", "generic-container/std"]
+std     = ["alloc", "generic-container/std"]
 alloc   = ["generic-container/alloc", "generic-container/kinds"]
+
+# Needs to have `kanal` or `crossbeam-channel` manually enabled.
+anchored-pool = ["dep:anchored-pool", "std"]
+anchored-pool-default = ["anchored-pool", "anchored-pool/default"]
 
 
 # Out of the lints that do anything (non-deprecated clippy lints, non-migration rust lints),
