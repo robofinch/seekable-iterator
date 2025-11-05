@@ -72,8 +72,8 @@ clippy *args:
 test:
     cargo +stable test --all-features
 
-doc:
-    RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features
+doc *args:
+    RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --keep-going {{args}}
 
 [group("on-save")]
 on-save: (clippy "--message-format=json")

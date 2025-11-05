@@ -18,6 +18,7 @@ Provides:
     circular iterators that can move backwards or forwards by one element.
   - [`Seekable`] trait, with all the seeking methods required by the `Seekable*Iterator` traits.
   - [`Comparator`] trait, for comparisons done to seek.
+  - [`LendItem`] and [`ItemToKey`]: helper traits for lending iterators.
 
 Adapters to [`lender::Lender`] and [`lending_iterator::LendingIterator`] are provided for
 [`CursorLendingIterator`] and [`PooledIterator`] when the corresponding features are enabled.
@@ -51,8 +52,9 @@ keys that implement [`Ord`], using their [`Ord`] implementation.
 - `lending-iterator`: provide adapters to [`lending_iterator::LendingIterator`].
 - `alloc`: provide [`MergingIter`], which merges together several
   [`SeekableLendingIterator`]s into one [`SeekableLendingIterator`] that iterates over all their
-  items. Note: `alloc` isn't truly crucial for `MergingIter`; open an issue if you want it on
-  no-alloc.
+  items in order. Similar to adapters like `itertools`' [`kmerge`], though somewhat more
+  complicated in order to support switching the direction of iteration.
+  Note: `alloc` isn't truly crucial for `MergingIter`; open an issue if you want it on no-alloc.
 - `std`: doesn't do much alone. Enables `alloc`, as well as the `std` feature of a dependency.
 - `anchored-pool`: provide [`PooledIter`] and [`ThreadsafePooledIter`]. [`PooledIter`] is an adapter
   from [`CursorLendingIterator`] to [`CursorPooledIterator`], and [`ThreadsafePooledIter`] is a
@@ -93,11 +95,16 @@ any additional terms or conditions.
 [`Comparator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.Comparator.html
 [`OrdComparator`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.OrdComparator.html
 
+[`LendItem`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.LendItem.html
+[`ItemToKey`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.ItemToKey.html
+
 [`MergingIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.MergingIter.html
 [`PooledIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.PooledIter.html
 [`ThreadsafePooledIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.ThreadsafePooledIter.html
 
 [`Ord`]: https://doc.rust-lang.org/std/cmp/trait.Ord.html
 [`FusedIterator`]: https://doc.rust-lang.org/std/iter/trait.FusedIterator.html
-[`lender::Lender`]: https://docs.rs/lender/0.3.2/lender/trait.Lender.html
+<!-- itertools v0.14.0 at present time -->
+[`kmerge`]: https://docs.rs/itertools/latest/itertools/trait.Itertools.html#method.kmerge
+[`lender::Lender`]: https://docs.rs/lender/0.4/lender/trait.Lender.html
 [`lending_iterator::LendingIterator`]: https://docs.rs/lending-iterator/0.1.7/lending_iterator/trait.LendingIterator.html

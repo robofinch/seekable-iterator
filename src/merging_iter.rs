@@ -68,6 +68,13 @@ enum Direction {
 /// The following methods do not impact and are not impacted by the direction:
 /// - [`MergingIter::valid`]
 /// - [`MergingIter::current`]
+///
+/// # Time Complexity
+/// [`MergingIter::new`] takes O(n) time and O(1) space, where `n` is `iterators.len()`.
+/// Switching direction, seeking, or resetting takes O(n) time. [`MergingIter::valid`] and
+/// [`MergingIter::current`] are O(1). Currently, [`MergingIter::next`] and [`MergingIter::prev`]
+/// take O(n) time even if they do not switch direction; soon, they will be O(log n) unless
+/// switching direction, in exchange for [`MergingIter::new`] taking O(n) space.
 #[derive(Debug)]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 pub struct MergingIter<Key: ?Sized, Cmp, Iter> {
@@ -75,7 +82,7 @@ pub struct MergingIter<Key: ?Sized, Cmp, Iter> {
     cmp:          Cmp,
     /// Ensures that the implementation of the iterator and comparator aren't switched
     /// mid-iteration by a pathological user
-    _key:         PhantomData<Key>,
+    _key:         PhantomData<fn(&Key)>,
     /// If `Some`, the value should be 1 more than the index of the current iterator.
     ///
     /// Additionally, an invariant is: after calling any public method of `Self` (notably

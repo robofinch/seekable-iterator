@@ -16,7 +16,7 @@ impl<T: ?Sized> sealed::Sealed for &T {}
 ///
 /// See [`lender`] for why this strategy is used instead of a simple GAT.
 ///
-#[cfg_attr(not(feature = "lender"), doc = " [`lender`]: <https://docs.rs/lender/0.3/lender>")]
+#[cfg_attr(not(feature = "lender"), doc = " [`lender`]: <https://docs.rs/lender/0.4/lender>")]
 pub trait LendItem<'lend, __ImplyBound: ImplyBound = &'lend Self> {
     /// The item of a lending iterator, with a particular lifetime.
     ///
