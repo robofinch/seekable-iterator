@@ -1,6 +1,6 @@
 #![expect(clippy::redundant_pub_crate, reason = "emphasize that this is internal")]
 
-use crate::{comparator::OrdComparator, cursor::CursorLendingIterator};
+use crate::{comparator::OrdComparator, cursor::CursorLendingIterator, key_kind::RefKey};
 use crate::{
     lending_iterator_support::{LendItem, LentItem},
     seekable::{ItemToKey, Seekable},
@@ -8,6 +8,7 @@ use crate::{
 
 
 /// An inefficient but functional seekable lending iterator over a byte slice.
+#[allow(dead_code)]
 pub(crate) struct TestIter<'a> {
     data:   &'a [u8],
     cursor: Option<usize>,
@@ -15,6 +16,7 @@ pub(crate) struct TestIter<'a> {
 
 impl<'a> TestIter<'a> {
     /// Checks that `data` is sorted.
+    #[allow(dead_code)]
     pub(crate) fn new(data: &'a [u8]) -> Option<Self> {
         if data.is_sorted() {
             Some(Self {
@@ -70,13 +72,13 @@ impl CursorLendingIterator for TestIter<'_> {
     }
 }
 
-impl ItemToKey<u8> for TestIter<'_> {
+impl ItemToKey<RefKey<u8>> for TestIter<'_> {
     fn item_to_key(item: LentItem<'_, Self>) -> &'_ u8 {
         item
     }
 }
 
-impl Seekable<u8, OrdComparator> for TestIter<'_> {
+impl Seekable<RefKey<u8>, OrdComparator> for TestIter<'_> {
     fn reset(&mut self) {
         self.cursor = None;
     }

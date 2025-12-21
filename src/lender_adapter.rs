@@ -5,7 +5,10 @@ use crate::{
     comparator::Comparator, lending_iterator_support::LentItem,
     pooled::PooledIterator, seekable::Seekable,
 };
-use crate::cursor::{CursorLendingIterator, CursorPooledIterator};
+use crate::{
+    key_kind::{KeyKind, KeyOf},
+    cursor::{CursorLendingIterator, CursorPooledIterator},
+};
 
 
 /// An adapter for [`CursorLendingIterator`] which implements [`lender::Lender`].

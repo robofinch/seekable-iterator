@@ -46,12 +46,12 @@ find-unsafe-code: (rg-maybe-no-match '"unsafe_code|unsafe"')
 plus-msrv := '+1.85'
 
 check *args:
-    cargo +stable hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
-    cargo +nightly hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
-    cargo {{plus-msrv}} hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
+    cargo +stable hack clippy --feature-powerset {{args}}
+    cargo +nightly hack clippy --feature-powerset {{args}}
+    cargo {{plus-msrv}} hack clippy --feature-powerset {{args}}
 
 clippy *args:
-    cargo +stable hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
+    cargo +stable hack clippy --feature-powerset {{args}}
     RUSTFLAGS="-Zcrate-attr=feature(\
                     strict_provenance_lints,\
                     must_not_suspend,\
@@ -66,11 +66,27 @@ clippy *args:
                 -Wsupertrait_item_shadowing_definition \
                 -Wsupertrait_item_shadowing_usage \
                 -Wunqualified_local_imports" \
-    cargo +nightly hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
-    cargo {{plus-msrv}} hack clippy --feature-powerset --exclude-features anchored-pool {{args}}
+    cargo +nightly hack clippy --feature-powerset {{args}}
+    cargo {{plus-msrv}} hack clippy --feature-powerset {{args}}
 
-test:
-    cargo +stable test --all-features
+test *args:
+    cargo +stable hack test --feature-powerset {{args}}
+    RUSTFLAGS="-Zcrate-attr=feature(\
+                    strict_provenance_lints,\
+                    must_not_suspend,\
+                    non_exhaustive_omitted_patterns_lint,\
+                    supertrait_item_shadowing,\
+                    unqualified_local_imports\
+                ) \
+                -Wfuzzy_provenance_casts \
+                -Wlossy_provenance_casts \
+                -Wmust_not_suspend \
+                -Wnon_exhaustive_omitted_patterns \
+                -Wsupertrait_item_shadowing_definition \
+                -Wsupertrait_item_shadowing_usage \
+                -Wunqualified_local_imports" \
+    cargo +nightly hack test --feature-powerset {{args}}
+    cargo {{plus-msrv}} hack test --feature-powerset {{args}}
 
 doc *args:
     RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --keep-going {{args}}

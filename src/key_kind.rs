@@ -38,9 +38,8 @@ pub trait OrdKeyKind: KeyKind {
 /// The key type `T` should be cheap to `Clone`, and likely `Copy`.
 ///
 /// [`Seekable`]: crate::seekable::Seekable
-// Covariant over `T`
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-pub struct TKey<T: ?Sized>(PhantomData<fn() -> T>);
+pub struct TKey<T: ?Sized>(PhantomData<fn(T) -> T>);
 
 impl<T: Clone> KeyWithLifetime<'_> for TKey<T> {
     type Key = T;
@@ -73,9 +72,8 @@ impl<T: ?Sized> Clone for TKey<T> {
 /// Indicate that a [`Seekable`] iterator uses a `&'key T` key type.
 ///
 /// [`Seekable`]: crate::seekable::Seekable
-// Covariant over `T`, just like `&'_ T`.
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-pub struct RefKey<T: ?Sized>(PhantomData<fn() -> T>);
+pub struct RefKey<T: ?Sized>(PhantomData<fn(T) -> T>);
 
 impl<'key, T: ?Sized> KeyWithLifetime<'key> for RefKey<T> {
     type Key = &'key T;

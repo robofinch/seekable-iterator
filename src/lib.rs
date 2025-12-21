@@ -18,6 +18,22 @@
 //! [`Comparator`]: Comparator
 //! [`OrdComparator`]: OrdComparator
 //!
+//! [`LendItem`]: LendItem
+//! [`ItemToKey`]: ItemToKey
+//!
+//! [`KeyKind`]: KeyKind
+//! [`OrdKeyKind`]: OrdKeyKind
+//! [`KeyWithLifetime`]: KeyWithLifetime
+//! [`TKey`]: TKey
+//! [`RefKey`]: RefKey
+//!
+//! [`PeekNext`]: PeekNext
+//! [`PeekPrev`]: PeekPrev
+//! [`PeekNextLend`]: PeekNextLend
+//! [`PeekPrevLend`]: PeekPrevLend
+//! [`PeekNextPooled`]: PeekNextPooled
+//! [`PeekPrevPooled`]: PeekPrevPooled
+//!
 //! [`Ord`]: Ord
 //! [`FusedIterator`]: core::iter::FusedIterator
 #![cfg_attr(feature = "lender", doc = " [`lender::Lender`]: lender::Lender")]

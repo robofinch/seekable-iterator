@@ -10,15 +10,21 @@
 # Traits
 
 Provides:
-  - [`SeekableIterator`], [`SeekableLendingIterator`], and [`SeekablePooledIterator`] traits, for
+  - [`SeekableIterator`], [`SeekableLendingIterator`], [`SeekablePooledIterator`]: traits for
     circular iterators that can move backwards or forwards and seek.
-  - [`PooledIterator`] trait, for iterators that would normally be a lending iterator, but use a
+  - [`PooledIterator`]: a trait for iterators that would normally be a lending iterator, but use a
     buffer pool to lend out multiple items at the same time.
-  - [`CursorIterator`], [`CursorLendingIterator`], and [`CursorPooledIterator`] traits, for
+  - [`CursorIterator`], [`CursorLendingIterator`], [`CursorPooledIterator`]: traits for
     circular iterators that can move backwards or forwards by one element.
-  - [`Seekable`] trait, with all the seeking methods required by the `Seekable*Iterator` traits.
-  - [`Comparator`] trait, for comparisons done to seek.
-  - [`LendItem`] and [`ItemToKey`]: helper traits for lending iterators.
+  - [`Seekable`]: all the seeking methods required by the `Seekable*Iterator` traits.
+  - [`Comparator`], [`KeyKind`], [`KeyWithLifetime`]: helper traits for [`Seekable`].
+  - [`OrdComparator`], [`OrdKeyKind`]: provide a default comparator for keys implementing [`Ord`].
+  - [`TKey`], [`RefKey`]: provide default implementations of [`KeyKind`] for common sorts of keys.
+  - [`LendItem`], [`ItemToKey`]: helper traits for lending iterators. Note that an equivalent of
+    [`ItemToKey`] for other seekable iterators might be useful but is not currently provided here.
+  - [`PeekNext`], [`PeekPrev`], [`PeekNextLend`], [`PeekPrevLend`], [`PeekNextPooled`],
+    [`PeekPrevPooled`]: traits that extend the `Cursor*Iterator` traits with the ability to peek at
+    a neighboring element and decide whether to advance the iterator's position.
 
 Adapters to [`lender::Lender`] and [`lending_iterator::LendingIterator`] are provided for
 [`CursorLendingIterator`] and [`PooledIterator`] when the corresponding features are enabled.
@@ -40,11 +46,11 @@ wraps back around to the start.
 The `PooledIterator` and `Cursor*Iterator` traits do not expose any comparator that the ordered
 collection and iterator might be using, but the [`Seekable`] and `Seekable*Iterator` traits _do_
 expose it via a [`Comparator`] generic. An [`OrdComparator`] struct is provided that can compare
-keys that implement [`Ord`], using their [`Ord`] implementation.
+keys that implement [`Ord`], using [`OrdKeyKind`].
 
 # Features
 
-- `clone-behavior` (enabled by default): Implements `clone-behavior` traits for `OrdComparator`.
+- `clone-behavior` (enabled by default): Implements `clone-behavior` traits for [`OrdComparator`].
 - `generic-container` (enabled by default): Implements `Comparator` for containers of
   `dyn Comparator`, and for `GenericContainer` whenever `GenericContainer` wraps a container of a
   `Comparator` implementation.
@@ -97,6 +103,19 @@ any additional terms or conditions.
 
 [`LendItem`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.LendItem.html
 [`ItemToKey`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.ItemToKey.html
+
+[`KeyKind`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.KeyKind.html
+[`OrdKeyKind`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.OrdKeyKind.html
+[`KeyWithLifetime`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.KeyWithLifetime.html
+[`TKey`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.TKey.html
+[`RefKey`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.RefKey.html
+
+[`PeekNext`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.PeekNext.html
+[`PeekPrev`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.PeekPrev.html
+[`PeekNextLend`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.PeekNextLend.html
+[`PeekPrevLend`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.PeekPrevLend.html
+[`PeekNextPooled`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.PeekNextPooled.html
+[`PeekPrevPooled`]: https://docs.rs/seekable-iterator/0/seekable_iterator/trait.PeekPrevPooled.html
 
 [`MergingIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.MergingIter.html
 [`PooledIter`]: https://docs.rs/seekable-iterator/0/seekable_iterator/struct.PooledIter.html

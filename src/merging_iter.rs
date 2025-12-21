@@ -384,6 +384,22 @@ where
     }
 }
 
+// impl<Key, Cmp, Iter> PeekNextLend for MergingIter<Key, Cmp, Iter>
+// where
+//     Key:  KeyKind,
+//     Cmp:  Comparator<Key>,
+//     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key> + PeekNextLend,
+// {
+//     fn peek_next_and_commit_if<F>(&mut self, f: F)
+//     where
+//         F: Fn(Option<LentItem<'_, Self>>) -> bool
+//     {
+//         if let Some(current_iter) = self.get_current_iter_mut() {
+//             current_iter
+//         }
+//     }
+// }
+
 impl<Key, Cmp, Iter> ItemToKey<Key> for MergingIter<Key, Cmp, Iter>
 where
     Key:  KeyKind,
@@ -498,11 +514,13 @@ where
 #[cfg(test)]
 mod tests {
     use alloc::vec;
-    use crate::{comparator::OrdComparator, test_iter::TestIter};
+    use crate::{comparator::OrdComparator, key_kind::RefKey, test_iter::TestIter};
     use super::*;
 
     /// The iterator must iterate over `[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]`
-    fn iteration_without_duplicates(iter: &mut MergingIter<u8, OrdComparator, TestIter<'_>>) {
+    fn iteration_without_duplicates(
+        iter: &mut MergingIter<RefKey<u8>, OrdComparator, TestIter<'_>>,
+    ) {
         assert_eq!(*iter.next().unwrap(), 0);
 
         for i in 1..=9 {
@@ -545,7 +563,7 @@ mod tests {
     /// There may be duplicates.
     fn seek_tests(
         merged_data: &[u8],
-        iter:        &mut MergingIter<u8, OrdComparator, TestIter<'_>>,
+        iter:        &mut MergingIter<RefKey<u8>, OrdComparator, TestIter<'_>>,
     ) {
         assert!(merged_data.is_sorted());
 
