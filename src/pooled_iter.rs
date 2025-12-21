@@ -8,6 +8,7 @@ use anchored_pool::{PooledResource, ResetNothing, ResourcePoolEmpty, BoundedPool
 
 use crate::{comparator::Comparator, lending_iterator_support::LentItem, seekable::Seekable};
 use crate::{
+    peeking::{PeekNextLend, PeekNextPooled, PeekPrevLend, PeekPrevPooled},
     pooled::{OutOfBuffers, PooledIterator},
     cursor::{CursorLendingIterator, CursorPooledIterator},
 };
@@ -199,6 +200,54 @@ where
 
     fn seek_to_last(&mut self) {
         self.iter.seek_to_last();
+    }
+}
+
+impl<I, BorrowedItem> PeekNextPooled for PooledIter<I, BorrowedItem>
+where
+    I:                             CursorLendingIterator + PeekNextLend,
+    BorrowedItem:                  ToOwned,
+    for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
+{
+    /// Peek at the next element of the collection, and decide based on that element whether
+    /// to move the iterator's position forward one element.
+    ///
+    /// The iterator's position is changed if the callback returns `true`, and remains unchanged
+    /// if the callback returns `false`.
+    ///
+    /// The callback is provided with `None` if the iterator is at the last entry.
+    ///
+    /// # Panics
+    /// Panics if there are no buffers available.
+    fn peek_next_and_commit_if<F>(&mut self, f: F) where F: Fn(Option<&Self::Item>) -> bool {
+        self.iter.peek_next_and_commit_if(|maybe_item| {
+            let pooled = maybe_item.map(|item| Self::fill_buffer(&self.pool, item));
+            f(pooled.as_ref())
+        });
+    }
+}
+
+impl<I, BorrowedItem> PeekPrevPooled for PooledIter<I, BorrowedItem>
+where
+    I:                             CursorLendingIterator + PeekPrevLend,
+    BorrowedItem:                  ToOwned,
+    for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
+{
+    /// Peek at the next element of the collection, and decide based on that element whether
+    /// to move the iterator's position forward one element.
+    ///
+    /// The iterator's position is changed if the callback returns `true`, and remains unchanged
+    /// if the callback returns `false`.
+    ///
+    /// The callback is provided with `None` if the iterator is at the last entry.
+    ///
+    /// # Panics
+    /// Panics if there are no buffers available.
+    fn peek_prev_and_commit_if<F>(&mut self, f: F) where F: Fn(Option<&Self::Item>) -> bool {
+        self.iter.peek_prev_and_commit_if(|maybe_item| {
+            let pooled = maybe_item.map(|item| Self::fill_buffer(&self.pool, item));
+            f(pooled.as_ref())
+        });
     }
 }
 

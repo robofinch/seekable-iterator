@@ -8,6 +8,7 @@ use anchored_pool::{PooledResource, ResetNothing, ResourcePoolEmpty, SharedBound
 
 use crate::{comparator::Comparator, lending_iterator_support::LentItem, seekable::Seekable};
 use crate::{
+    peeking::{PeekNextLend, PeekNextPooled, PeekPrevLend, PeekPrevPooled},
     pooled::{OutOfBuffers, PooledIterator},
     cursor::{CursorLendingIterator, CursorPooledIterator},
 };
@@ -198,6 +199,58 @@ where
 
     fn seek_to_last(&mut self) {
         self.iter.seek_to_last();
+    }
+}
+
+impl<I, BorrowedItem> PeekNextPooled for ThreadsafePooledIter<I, BorrowedItem>
+where
+    I:                             CursorLendingIterator + PeekNextLend,
+    BorrowedItem:                  ToOwned,
+    for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
+{
+    /// Peek at the next element of the collection, and decide based on that element whether
+    /// to move the iterator's position forward one element.
+    ///
+    /// The iterator's position is changed if the callback returns `true`, and remains unchanged
+    /// if the callback returns `false`.
+    ///
+    /// The callback is provided with `None` if the iterator is at the last entry.
+    ///
+    /// # Potential Panics or Deadlocks
+    /// If `self.buffer_pool_size() == 0`, then this method panics.
+    /// This method may also cause a deadlock if no buffers are currently available, and the
+    /// current thread needs to make progress in order to release a buffer.
+    fn peek_next_and_commit_if<F>(&mut self, f: F) where F: Fn(Option<&Self::Item>) -> bool {
+        self.iter.peek_next_and_commit_if(|maybe_item| {
+            let pooled = maybe_item.map(|item| Self::fill_buffer(&self.pool, item));
+            f(pooled.as_ref())
+        });
+    }
+}
+
+impl<I, BorrowedItem> PeekPrevPooled for ThreadsafePooledIter<I, BorrowedItem>
+where
+    I:                             CursorLendingIterator + PeekPrevLend,
+    BorrowedItem:                  ToOwned,
+    for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
+{
+    /// Peek at the previous element of the collection, and decide based on that element whether
+    /// to move the iterator's position back one element.
+    ///
+    /// The iterator's position is changed if the callback returns `true`, and remains unchanged
+    /// if the callback returns `false`.
+    ///
+    /// The callback is provided with `None` if the iterator is at the first entry.
+    ///
+    /// # Potential Panics or Deadlocks
+    /// If `self.buffer_pool_size() == 0`, then this method panics.
+    /// This method may also cause a deadlock if no buffers are currently available, and the
+    /// current thread needs to make progress in order to release a buffer.
+    fn peek_prev_and_commit_if<F>(&mut self, f: F) where F: Fn(Option<&Self::Item>) -> bool {
+        self.iter.peek_prev_and_commit_if(|maybe_item| {
+            let pooled = maybe_item.map(|item| Self::fill_buffer(&self.pool, item));
+            f(pooled.as_ref())
+        });
     }
 }
 

@@ -67,6 +67,7 @@ mod seekable;
 mod seekable_iterators;
 
 mod lending_iterator_support;
+mod peeking;
 
 #[cfg(feature = "alloc")]
 mod merging_iter;
@@ -91,6 +92,7 @@ pub use self::{
     comparator::{Comparator, OrdComparator},
     cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator},
     lending_iterator_support::{ImplyBound, LendItem, LentItem},
+    peeking::{PeekNext, PeekNextLend, PeekNextPooled, PeekPrev, PeekPrevLend, PeekPrevPooled},
     pooled::{OutOfBuffers, PooledIterator},
     seekable::{ItemToKey, Seekable},
     seekable_iterators::{SeekableIterator, SeekableLendingIterator, SeekablePooledIterator},

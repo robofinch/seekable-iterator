@@ -5,8 +5,7 @@ version = 4
 [[package]]
 name = "anchored-pool"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdc0232284983ca20016b1cc6414b73362b41456aee6a0b62ad604168e44dbba"
+source = "git+https://github.com/robofinch/anchored-leveldb#6c3d33e8e9af33ccc0f0d345a6e3ac768cb93306"
 dependencies = [
  "cfg-if",
  "kanal",
@@ -21,8 +20,7 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 [[package]]
 name = "clone-behavior"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd55096d02d338fda033727875a3a47124e3c9140b034fef881e8d594f3f897a"
+source = "git+https://github.com/robofinch/clone-behavior#cd1a59b841429dbd5ffaee65ea4fa050680dd04d"
 
 [[package]]
 name = "equivalent"
@@ -68,8 +66,7 @@ checksum = "05f29059c0c2090612e8d742178b0580d2dc940c837851ad723096f87af6663e"
 [[package]]
 name = "generic-container"
 version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8445501062636ea5d4fb3a33c9c987773e9fdeba1934d13c9d0e8f879f83d9f"
+source = "git+https://github.com/robofinch/generic-container#60a3a006720c386226450ccf38f95e22a1912b53"
 dependencies = [
  "serde",
 ]
