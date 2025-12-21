@@ -17,9 +17,9 @@ license      = "MIT OR Apache-2.0"
 # anchored-pool       = { version = "0.2.0", default-features = false, optional = true }
 # clone-behavior      = { version = "0.1.0", default-features = false, optional = true }
 # generic-container   = { version = "0.2.2", default-features = false, optional = true }
-anchored-pool       = { package = "anchored-pool", git = "https://github.com/robofinch/anchored-leveldb", optional = true }
-clone-behavior       = { package = "clone-behavior", git = "https://github.com/robofinch/clone-behavior", optional = true }
-generic-container       = { package = "generic-container", git = "https://github.com/robofinch/generic-container", optional = true }
+anchored-pool       = { package = "anchored-pool", git = "https://github.com/robofinch/anchored-leveldb", branch = "main", optional = true }
+clone-behavior      = { package = "clone-behavior", git = "https://github.com/robofinch/clone-behavior", branch = "main", optional = true }
+generic-container   = { package = "generic-container", git = "https://github.com/robofinch/generic-container", branch = "dev", optional = true }
 lender              = { version = "0.4.0", default-features = false, optional = true }
 lending-iterator    = { version = "0.1.7", default-features = false, optional = true }
 
