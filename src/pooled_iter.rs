@@ -8,6 +8,7 @@ use anchored_pool::{PooledResource, ResetNothing, ResourcePoolEmpty, BoundedPool
 
 use crate::{comparator::Comparator, lending_iterator_support::LentItem, seekable::Seekable};
 use crate::{
+    key_kind::{KeyKind, KeyOf},
     peeking::{PeekNextLend, PeekNextPooled, PeekPrevLend, PeekPrevPooled},
     pooled::{OutOfBuffers, PooledIterator},
     cursor::{CursorLendingIterator, CursorPooledIterator},
@@ -176,7 +177,7 @@ impl<I, BorrowedItem, Key, Cmp> Seekable<Key, Cmp> for PooledIter<I, BorrowedIte
 where
     I:                             CursorLendingIterator + Seekable<Key, Cmp>,
     BorrowedItem:                  ToOwned,
-    Key:                           ?Sized,
+    Key:                           KeyKind,
     Cmp:                           Comparator<Key>,
     for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
 {
@@ -185,11 +186,11 @@ where
         self.iter.reset();
     }
 
-    fn seek(&mut self, min_bound: &Key) {
+    fn seek(&mut self, min_bound: KeyOf<'_, Key>) {
         self.iter.seek(min_bound);
     }
 
-    fn seek_before(&mut self, strict_upper_bound: &Key) {
+    fn seek_before(&mut self, strict_upper_bound: KeyOf<'_, Key>) {
         self.iter.seek_before(strict_upper_bound);
     }
 

@@ -5,6 +5,8 @@ use clone_behavior::{DeepClone, MirroredClone, Speed};
 #[cfg(feature = "generic-container")]
 use generic_container::{FragileContainer, GenericContainer};
 
+use crate::key_kind::{KeyKind, KeyOf, OrdKeyKind};
+
 
 /// Interface for comparing keys (or entries) of a sorted collection.
 ///
@@ -19,7 +21,7 @@ use generic_container::{FragileContainer, GenericContainer};
 /// Unsafe code is *not* allowed to rely on the correctness of implementations; that is, an
 /// incorrect `Comparator` implementation may cause severe logic errors, but must not cause
 /// memory unsafety.
-pub trait Comparator<Key: ?Sized> {
+pub trait Comparator<Key> where Key: KeyKind {
     /// Compare two keys (or entries) in a sorted collection.
     ///
     /// This method is analogous to [`Ord::cmp`], and should provide a total order.
@@ -33,13 +35,13 @@ pub trait Comparator<Key: ?Sized> {
     /// incorrect implementation may cause severe logic errors, but must not cause
     /// memory unsafety.
     #[must_use]
-    fn cmp(&self, lhs: &Key, rhs: &Key) -> Ordering;
+    fn cmp(&self, lhs: KeyOf<'_, Key>, rhs: KeyOf<'_, Key>) -> Ordering;
 }
 
 #[cfg(feature = "generic-container")]
-impl<Key: ?Sized, C: FragileContainer<dyn Comparator<Key>>> Comparator<Key> for C {
+impl<Key: KeyKind, C: FragileContainer<dyn Comparator<Key>>> Comparator<Key> for C {
     #[inline]
-    fn cmp(&self, lhs: &Key, rhs: &Key) -> Ordering {
+    fn cmp(&self, lhs: KeyOf<'_, Key>, rhs: KeyOf<'_, Key>) -> Ordering {
         // I'm slightly paranoid about the type coercion coercing to the wrong thing,
         // but doing this line-by-line is probably unnecessary.
         let inner = self.get_ref();
@@ -53,25 +55,25 @@ impl<T, C, Key> Comparator<Key> for GenericContainer<T, C>
 where
     T:   ?Sized + Comparator<Key>,
     C:   ?Sized + FragileContainer<T>,
-    Key: ?Sized,
+    Key: KeyKind,
 {
     #[inline]
-    fn cmp(&self, lhs: &Key, rhs: &Key) -> Ordering {
+    fn cmp(&self, lhs: KeyOf<'_, Key>, rhs: KeyOf<'_, Key>) -> Ordering {
         let inner = self.container.get_ref();
         let inner: &T = &inner;
         inner.cmp(lhs, rhs)
     }
 }
 
-/// A [`Comparator`] which uses keys' [`Ord`] implementations.
+/// A [`Comparator`] which uses keys' [`Ord`] implementations via the [`OrdKeyKind`] trait.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OrdComparator;
 
-impl<Key: ?Sized + Ord> Comparator<Key> for OrdComparator {
-    /// Equivalent to `Ord::cmp(lhs, rhs)`.
+impl<Key: OrdKeyKind> Comparator<Key> for OrdComparator
+{
     #[inline]
-    fn cmp(&self, lhs: &Key, rhs: &Key) -> Ordering {
-        Ord::cmp(lhs, rhs)
+    fn cmp(&self, lhs: KeyOf<'_, Key>, rhs: KeyOf<'_, Key>) -> Ordering {
+        Key::cmp(lhs, rhs)
     }
 }
 

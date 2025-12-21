@@ -62,6 +62,7 @@ extern crate std;
 
 mod comparator;
 mod cursor;
+mod key_kind;
 mod pooled;
 mod seekable;
 mod seekable_iterators;
@@ -91,6 +92,7 @@ mod lending_iterator_adapter;
 pub use self::{
     comparator::{Comparator, OrdComparator},
     cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator},
+    key_kind::{KeyKind, KeyOf, KeyWithLifetime, OrdKeyKind, RefKey, TKey},
     lending_iterator_support::{ImplyBound, LendItem, LentItem},
     peeking::{PeekNext, PeekNextLend, PeekNextPooled, PeekPrev, PeekPrevLend, PeekPrevPooled},
     pooled::{OutOfBuffers, PooledIterator},

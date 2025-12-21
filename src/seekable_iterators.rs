@@ -1,4 +1,4 @@
-use crate::{comparator::Comparator, seekable::Seekable};
+use crate::{comparator::Comparator, key_kind::KeyKind, seekable::Seekable};
 use crate::cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator};
 
 
@@ -10,13 +10,13 @@ use crate::cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator}
 /// All implementations are automatically provided by a blanket impl.
 pub trait SeekableIterator<Key, Cmp>: CursorIterator + Seekable<Key, Cmp>
 where
-    Key: ?Sized,
+    Key: KeyKind,
     Cmp: ?Sized + Comparator<Key>,
 {}
 
 impl<Key, Cmp, I> SeekableIterator<Key, Cmp> for I
 where
-    Key: ?Sized,
+    Key: KeyKind,
     Cmp: ?Sized + Comparator<Key>,
     I: CursorIterator + Seekable<Key, Cmp>,
 {}
@@ -37,13 +37,13 @@ where
 /// [`ItemToKey`]: crate::seekable::ItemToKey
 pub trait SeekableLendingIterator<Key, Cmp>: CursorLendingIterator + Seekable<Key, Cmp>
 where
-    Key: ?Sized,
+    Key: KeyKind,
     Cmp: ?Sized + Comparator<Key>,
 {}
 
 impl<Key, Cmp, I> SeekableLendingIterator<Key, Cmp> for I
 where
-    Key: ?Sized,
+    Key: KeyKind,
     Cmp: ?Sized + Comparator<Key>,
     I: CursorLendingIterator + Seekable<Key, Cmp>,
 {}
@@ -61,13 +61,13 @@ where
 /// [`PooledIterator`]: crate::pooled::PooledIterator
 pub trait SeekablePooledIterator<Key, Cmp>: CursorPooledIterator + Seekable<Key, Cmp>
 where
-    Key: ?Sized,
+    Key: KeyKind,
     Cmp: ?Sized + Comparator<Key>,
 {}
 
 impl<Key, Cmp, I> SeekablePooledIterator<Key, Cmp> for I
 where
-    Key: ?Sized,
+    Key: KeyKind,
     Cmp: ?Sized + Comparator<Key>,
     I: CursorPooledIterator + Seekable<Key, Cmp>,
 {}

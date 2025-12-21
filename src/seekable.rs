@@ -1,5 +1,8 @@
 use crate::comparator::Comparator;
-use crate::lending_iterator_support::{LendItem, LentItem};
+use crate::{
+    key_kind::{KeyOf, KeyKind},
+    lending_iterator_support::{LendItem, LentItem},
+};
 
 
 /// A trait adding seek functionality to one of the cursor iterator traits.
@@ -15,7 +18,7 @@ use crate::lending_iterator_support::{LendItem, LentItem};
 /// [`CursorIterator`]: crate::cursor::CursorIterator
 /// [`CursorLendingIterator`]: crate::cursor::CursorLendingIterator
 /// [`CursorPooledIterator`]: crate::cursor::CursorPooledIterator
-pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
+pub trait Seekable<Key: KeyKind, Cmp: ?Sized + Comparator<Key>> {
     /// Reset the iterator to its initial position, before the first entry and after the last
     /// entry (if there are any entries in the collection).
     ///
@@ -29,7 +32,7 @@ pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
     /// If there is no such key, the iterator becomes `!valid()`, and is conceptually
     /// one position before the first entry and one position after the last entry (if there are
     /// any entries in the collection).
-    fn seek(&mut self, min_bound: &Key);
+    fn seek(&mut self, min_bound: KeyOf<'_, Key>);
 
     /// Move the iterator to the greatest key which is strictly less than the provided
     /// `strict_upper_bound`.
@@ -41,7 +44,7 @@ pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
     /// Some implementations may have worse performance for `seek_before` than [`seek`].
     ///
     /// [`seek`]: Seekable::seek
-    fn seek_before(&mut self, strict_upper_bound: &Key);
+    fn seek_before(&mut self, strict_upper_bound: KeyOf<'_, Key>);
 
     /// Move the iterator to the smallest key in the collection.
     ///
@@ -60,7 +63,7 @@ pub trait Seekable<Key: ?Sized, Cmp: ?Sized + Comparator<Key>> {
 /// This conversion is expected to be cheap.
 ///
 /// [`SeekableLendingIterator`]: crate::seekable_iterators::SeekableLendingIterator
-pub trait ItemToKey<Key: ?Sized>: for<'lend> LendItem<'lend> {
+pub trait ItemToKey<Key: KeyKind>: for<'lend> LendItem<'lend> {
     /// Convert one of the items of an iterator into a `Key` reference, intended for use with
     /// a [`SeekableLendingIterator`].
     ///
@@ -68,7 +71,7 @@ pub trait ItemToKey<Key: ?Sized>: for<'lend> LendItem<'lend> {
     ///
     /// [`SeekableLendingIterator`]: crate::seekable_iterators::SeekableLendingIterator
     #[must_use]
-    fn item_to_key(item: LentItem<'_, Self>) -> &'_ Key;
+    fn item_to_key(item: LentItem<'_, Self>) -> KeyOf<'_, Key>;
 }
 
 #[cfg(any(feature = "lender", feature = "lending-iterator"))]
@@ -76,7 +79,7 @@ macro_rules! delegate_seekable {
     ($struct_name:ident.$field:tt $($extra_i_bounds:tt)*) => {
         impl<Key, Cmp, I> Seekable<Key, Cmp> for $struct_name<I>
         where
-            Key: ?Sized,
+            Key: KeyKind,
             Cmp: ?Sized + Comparator<Key>,
             I:   Seekable<Key, Cmp> + $($extra_i_bounds)*,
         {
@@ -86,12 +89,12 @@ macro_rules! delegate_seekable {
             }
 
             #[inline]
-            fn seek(&mut self, min_bound: &Key) {
+            fn seek(&mut self, min_bound: KeyOf<'_, Key>) {
                 self.$field.seek(min_bound);
             }
 
             #[inline]
-            fn seek_before(&mut self, strict_upper_bound: &Key) {
+            fn seek_before(&mut self, strict_upper_bound: KeyOf<'_, Key>) {
                 self.$field.seek_before(strict_upper_bound);
             }
 

@@ -3,7 +3,9 @@ use alloc::vec::Vec;
 
 use crate::comparator::Comparator;
 use crate::cursor::CursorLendingIterator;
+use crate::key_kind::{KeyKind, KeyOf};
 use crate::lending_iterator_support::{LendItem, LentItem};
+// use crate::peeking::{PeekNextLend, PeekPrevLend};
 use crate::seekable::{ItemToKey, Seekable};
 use crate::seekable_iterators::SeekableLendingIterator;
 
@@ -77,12 +79,12 @@ enum Direction {
 /// switching direction, in exchange for [`MergingIter::new`] taking O(n) space.
 #[derive(Debug)]
 #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-pub struct MergingIter<Key: ?Sized, Cmp, Iter> {
+pub struct MergingIter<Key, Cmp, Iter> {
     iterators:    Vec<Iter>,
     cmp:          Cmp,
     /// Ensures that the implementation of the iterator and comparator aren't switched
     /// mid-iteration by a pathological user
-    _key:         PhantomData<fn(&Key)>,
+    _key:         PhantomData<fn(Key) -> Key>,
     /// If `Some`, the value should be 1 more than the index of the current iterator.
     ///
     /// Additionally, an invariant is: after calling any public method of `Self` (notably
@@ -101,7 +103,7 @@ pub struct MergingIter<Key: ?Sized, Cmp, Iter> {
 
 impl<Key, Cmp, Iter> MergingIter<Key, Cmp, Iter>
 where
-    Key:  ?Sized,
+    Key:  KeyKind,
     Cmp:  Comparator<Key>,
     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key>,
 {
@@ -137,7 +139,7 @@ where
 
 impl<Key, Cmp, Iter> MergingIter<Key, Cmp, Iter>
 where
-    Key:  ?Sized,
+    Key:  KeyKind,
     Cmp:  Comparator<Key>,
     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key>,
 {
@@ -156,13 +158,14 @@ where
     /// Set `self.current_iter` to the iterator with the smallest `current` key, among the
     /// iterators in `self.iterators` which are valid.
     fn find_smallest_iter(&mut self) {
-        let mut smallest: Option<(usize, &Key)> = None;
+        let mut smallest: Option<(usize, KeyOf<'_, Key>)> = None;
 
         for (idx, iter) in self.iterators.iter().enumerate() {
             if let Some(curr_item) = iter.current() {
                 let curr_key = Iter::item_to_key(curr_item);
-                if let Some((_, smallest_key)) = smallest {
-                    if self.cmp.cmp(curr_key, smallest_key) == Ordering::Less {
+                if let Some((_, smallest_key)) = &smallest {
+                    // Note that keys are expected to be cheap to clone
+                    if self.cmp.cmp(curr_key.clone(), smallest_key.clone()) == Ordering::Less {
                         // `curr_key` is smaller than the previous `smallest`'s key
                         smallest = Some((idx, curr_key));
                     }
@@ -184,13 +187,14 @@ where
     /// Set `self.current_iter` to the iterator with the largest `current` key, among the
     /// iterators in `self.iterators` which are valid.
     fn find_largest_iter(&mut self) {
-        let mut largest: Option<(usize, &Key)> = None;
+        let mut largest: Option<(usize, KeyOf<'_, Key>)> = None;
 
         for (idx, iter) in self.iterators.iter().enumerate().rev() {
             if let Some(curr_item) = iter.current() {
                 let curr_key = Iter::item_to_key(curr_item);
-                if let Some((_, largest_key)) = largest {
-                    if self.cmp.cmp(curr_key, largest_key) == Ordering::Greater {
+                if let Some((_, largest_key)) = &largest {
+                    // Note that keys are expected to be cheap to clone
+                    if self.cmp.cmp(curr_key.clone(), largest_key.clone()) == Ordering::Greater {
                         // `curr_key` is smaller than the previous `largest`'s key
                         largest = Some((idx, curr_key));
                     }
@@ -227,27 +231,32 @@ where
         let current_key = Iter::item_to_key(current_iter.current().unwrap());
 
         for iter in iters {
-            iter.seek(current_key);
+            // Note that keys are expected to be cheap to clone
+            iter.seek(current_key.clone());
 
             // `seek` provides a `geq` order, we want a strict greater-than order.
             if iter.current().is_some_and(|item| {
-                self.cmp.cmp(current_key, Iter::item_to_key(item)) == Ordering::Equal
+                // Note that keys are expected to be cheap to clone
+                self.cmp.cmp(current_key.clone(), Iter::item_to_key(item)) == Ordering::Equal
             }) {
                 iter.next();
             }
         }
 
         for iter in other_iters {
-            iter.seek(current_key);
+            // Note that keys are expected to be cheap to clone
+            iter.seek(current_key.clone());
 
             if iter.current().is_some_and(|item| {
-                self.cmp.cmp(current_key, Iter::item_to_key(item)) == Ordering::Equal
+                // Note that keys are expected to be cheap to clone
+                self.cmp.cmp(current_key.clone(), Iter::item_to_key(item)) == Ordering::Equal
             }) {
                 iter.next();
             }
         }
 
         self.direction = Direction::Forwards;
+        drop(current_key);
 
         current_iter
     }
@@ -269,14 +278,16 @@ where
         )]
         let current_key = Iter::item_to_key(current_iter.current().unwrap());
 
+        // Note that keys are expected to be cheap to clone
         for iter in iters {
-            iter.seek_before(current_key);
+            iter.seek_before(current_key.clone());
         }
         for iter in other_iters {
-            iter.seek_before(current_key);
+            iter.seek_before(current_key.clone());
         }
 
         self.direction = Direction::Backwards;
+        drop(current_key);
 
         current_iter
     }
@@ -284,7 +295,7 @@ where
 
 impl<'lend, Key, Cmp, Iter> LendItem<'lend> for MergingIter<Key, Cmp, Iter>
 where
-    Key: ?Sized,
+    Key:  KeyKind,
     Iter: LendItem<'lend>,
 {
     type Item = Iter::Item;
@@ -292,7 +303,7 @@ where
 
 impl<Key, Cmp, Iter> CursorLendingIterator for MergingIter<Key, Cmp, Iter>
 where
-    Key:  ?Sized,
+    Key:  KeyKind,
     Cmp:  Comparator<Key>,
     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key>,
 {
@@ -375,18 +386,18 @@ where
 
 impl<Key, Cmp, Iter> ItemToKey<Key> for MergingIter<Key, Cmp, Iter>
 where
-    Key:  ?Sized,
+    Key:  KeyKind,
     Iter: ItemToKey<Key>,
 {
     #[inline]
-    fn item_to_key(item: LentItem<'_, Self>) -> &'_ Key {
+    fn item_to_key(item: LentItem<'_, Self>) -> KeyOf<'_, Key> {
         Iter::item_to_key(item)
     }
 }
 
 impl<Key, Cmp, Iter> Seekable<Key, Cmp> for MergingIter<Key, Cmp, Iter>
 where
-    Key:  ?Sized,
+    Key:  KeyKind,
     Cmp:  Comparator<Key>,
     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key>,
 {
@@ -398,9 +409,10 @@ where
         self.direction = Direction::Forwards;
     }
 
-    fn seek(&mut self, min_bound: &Key) {
+    fn seek(&mut self, min_bound: KeyOf<'_, Key>) {
         for iter in &mut self.iterators {
-            iter.seek(min_bound);
+            // Note that keys are expected to be cheap to clone
+            iter.seek(min_bound.clone());
         }
 
         self.find_smallest_iter();
@@ -419,9 +431,10 @@ where
     /// iteration; check the type-level documentation if you wish to use `seek_before`.
     ///
     /// [`seek`]: MergingIter::seek
-    fn seek_before(&mut self, strict_upper_bound: &Key) {
+    fn seek_before(&mut self, strict_upper_bound: KeyOf<'_, Key>) {
         for iter in &mut self.iterators {
-            iter.seek_before(strict_upper_bound);
+            // Note that keys are expected to be cheap to clone
+            iter.seek_before(strict_upper_bound.clone());
         }
 
         self.find_largest_iter();
@@ -452,6 +465,34 @@ where
         self.direction = Direction::Backwards;
     }
 }
+
+// impl<Key, Cmp, Iter> PeekNextLend for MergingIter<Key, Cmp, Iter>
+// where
+//     Key:  ?Sized,
+//     Cmp:  Comparator<Key>,
+//     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key> + PeekNextLend,
+// {
+//     fn peek_next_and_commit_if<F>(&mut self, f: F)
+//     where
+//         F: Fn(Option<LentItem<'_, Self>>) -> bool,
+//     {
+
+//     }
+// }
+
+// impl<Key, Cmp, Iter> PeekPrevLend for MergingIter<Key, Cmp, Iter>
+// where
+//     Key:  ?Sized,
+//     Cmp:  Comparator<Key>,
+//     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key> + PeekPrevLend,
+// {
+//     fn peek_prev_and_commit_if<F>(&mut self, f: F)
+//     where
+//         F: Fn(Option<LentItem<'_, Self>>) -> bool,
+//     {
+
+//     }
+// }
 
 
 #[cfg(test)]

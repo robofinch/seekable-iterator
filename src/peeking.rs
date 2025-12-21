@@ -1,4 +1,5 @@
-use crate::{CursorIterator, CursorLendingIterator, CursorPooledIterator, LentItem};
+use crate::lending_iterator_support::LentItem;
+use crate::cursor::{CursorIterator, CursorLendingIterator, CursorPooledIterator};
 
 
 /// Extend a `CursorIterator` with the ability to peek at the next element and choose based
