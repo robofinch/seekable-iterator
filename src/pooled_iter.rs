@@ -211,61 +211,18 @@ where
     for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
 {
     /// Peek at the next element of the collection (or `None` if the iterator is at the last
-    /// entry), and decide based on that element whether to move the iterator's position forward
-    /// one element.
+    /// entry).
     ///
-    /// If the callback returns `true`, the iterator's position is changed and the peeked value
-    /// is returned wrapped in `Some`. If the callback returns `false`, the iterator's position
-    /// remains unchanged and `None` is returned.
+    /// After any number of additional calls to `self.peek_next()` and non-mutating methods
+    /// like `self.current()` and `self.valid()`, `self.next()` will return this peeked element.
     ///
-    /// # Panics
-    /// May panic if there are no buffers available.
-    fn next_if<F>(&mut self, f: F) -> Option<Option<Self::Item>>
-    where
-        F: FnOnce(Option<&Self::Item>) -> bool,
-    {
-        let mut peeked = None;
-        let advanced = self.iter.next_if(|maybe_item| {
-            peeked = maybe_item.map(|item| Self::fill_buffer(&self.pool, item));
-            f(peeked.as_ref())
-        }).is_some();
-
-        if advanced {
-            Some(peeked)
-        } else {
-            None
-        }
-    }
-
-    /// Peek at the next element of the collection, and decide based on that element whether to
-    /// move the iterator's position forward one element. If the iterator is at the last entry
-    /// -- in other words, if the advanced iterator would not be [valid] --
-    /// the iterator is not advanced and `None` is returned.
-    ///
-    /// If the callback returns `true`, the iterator's position is changed and the peeked value
-    /// is returned wrapped in `Some`. Otherwise, the iterator's position remains unchanged
-    /// and `None` is returned.
+    /// Calling any other methods, including `self.peek_prev()`, may break that guarantee;
+    /// this is relevant in particular to iterators over concurrent collections.
     ///
     /// # Panics
-    /// May panic if there are no buffers available.
-    ///
-    /// [valid]: CursorPooledIterator::valid
-    fn next_if_valid_and<F>(&mut self, f: F) -> Option<Self::Item>
-    where
-        F: FnOnce(&Self::Item) -> bool,
-    {
-        let mut maybe_peeked = None;
-        self.iter.next_if_valid_and(|item| {
-            let peeked = Self::fill_buffer(&self.pool, item);
-            if f(&peeked) {
-                maybe_peeked = Some(peeked);
-                true
-            } else {
-                false
-            }
-        });
-
-        maybe_peeked
+    /// Panics if there are no buffers available.
+    fn peek_next(&mut self) -> Option<Self::Item> {
+        self.iter.peek_next().map(|item| Self::fill_buffer(&self.pool, item))
     }
 }
 
@@ -276,67 +233,21 @@ where
     for<'lend> LentItem<'lend, I>: Borrow<BorrowedItem>,
 {
     /// Peek at the previous element of the collection (or `None` if the iterator is at the first
-    /// entry), and decide based on that element whether to move the iterator's position backward
-    /// one element.
+    /// entry).
     ///
-    /// If the callback returns `true`, the iterator's position is changed and the peeked value
-    /// is returned wrapped in `Some`. If the callback returns `false`, the iterator's position
-    /// remains unchanged and `None` is returned.
+    /// After any number of additional calls to `self.peek_prev()` and non-mutating methods
+    /// like `self.current()` and `self.valid()`, `self.prev()` will return this peeked element.
     ///
-    /// Some implementations may have worse performance for backwards iteration than forwards
-    /// iteration, so prefer to not use `prev_if`.
-    ///
-    /// # Panics
-    /// May panic if there are no buffers available.
-    fn prev_if<F>(&mut self, f: F) -> Option<Option<Self::Item>>
-    where
-        F: FnOnce(Option<&Self::Item>) -> bool,
-    {
-        let mut peeked = None;
-        let advanced = self.iter.prev_if(|maybe_item| {
-            peeked = maybe_item.map(|item| Self::fill_buffer(&self.pool, item));
-            f(peeked.as_ref())
-        }).is_some();
-
-        if advanced {
-            Some(peeked)
-        } else {
-            None
-        }
-    }
-
-    /// Peek at the previous element of the collection, and decide based on that element whether to
-    /// move the iterator's position forward one element. If the iterator is at the last entry
-    /// -- in other words, if the advanced iterator would not be [valid] --
-    /// the iterator is not advanced and `None` is returned.
-    ///
-    /// If the callback returns `true`, the iterator's position is changed and the peeked value
-    /// is returned wrapped in `Some`. Otherwise, the iterator's position remains unchanged
-    /// and `None` is returned.
+    /// Calling any other methods, including `self.peek_next()`, may break that guarantee;
+    /// this is relevant in particular to iterators over concurrent collections.
     ///
     /// Some implementations may have worse performance for backwards iteration than forwards
-    /// iteration, so prefer to not use `prev_if_valid_and`.
+    /// iteration, so prefer to not use `peek_prev`.
     ///
     /// # Panics
-    /// May panic if there are no buffers available.
-    ///
-    /// [valid]: CursorPooledIterator::valid
-    fn prev_if_valid_and<F>(&mut self, f: F) -> Option<Self::Item>
-    where
-        F: FnOnce(&Self::Item) -> bool,
-    {
-        let mut maybe_peeked = None;
-        self.iter.prev_if_valid_and(|item| {
-            let peeked = Self::fill_buffer(&self.pool, item);
-            if f(&peeked) {
-                maybe_peeked = Some(peeked);
-                true
-            } else {
-                false
-            }
-        });
-
-        maybe_peeked
+    /// Panics if there are no buffers available.
+    fn peek_prev(&mut self) -> Option<Self::Item> {
+        self.iter.peek_prev().map(|item| Self::fill_buffer(&self.pool, item))
     }
 }
 

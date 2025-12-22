@@ -22,9 +22,9 @@ Provides:
   - [`TKey`], [`RefKey`]: provide default implementations of [`KeyKind`] for common sorts of keys.
   - [`LendItem`], [`ItemToKey`]: helper traits for lending iterators. Note that an equivalent of
     [`ItemToKey`] for other seekable iterators might be useful but is not currently provided here.
-  - [`PeekNext`], [`PeekPrev`], [`PeekNextLend`], [`PeekPrevLend`], [`PeekNextPooled`],
-    [`PeekPrevPooled`]: traits that extend the `Cursor*Iterator` traits with the ability to peek at
-    a neighboring element and decide whether to advance the iterator's position.
+  - [`PeekNext`], [`PeekPrev`], [`PeekNextLend`], [`PeekPrevLend`],
+    [`PeekNextPooled`], [`PeekPrevPooled`]: fine-grained traits that extend the `Cursor*Iterator`
+    traits with peeking at a neighboring element.
 
 Adapters to [`lender::Lender`] and [`lending_iterator::LendingIterator`] are provided for
 [`CursorLendingIterator`] and [`PooledIterator`] when the corresponding features are enabled.
