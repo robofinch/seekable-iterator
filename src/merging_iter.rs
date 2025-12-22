@@ -1,13 +1,17 @@
-use core::{cmp::Ordering, marker::PhantomData, num::NonZero};
+use core::{marker::PhantomData, num::NonZero};
 use alloc::vec::Vec;
 
-use crate::comparator::Comparator;
-use crate::cursor::CursorLendingIterator;
-use crate::key_kind::{KeyKind, KeyOf};
-use crate::lending_iterator_support::{LendItem, LentItem};
-// use crate::peeking::{PeekNextLend, PeekPrevLend};
-use crate::seekable::{ItemToKey, Seekable};
-use crate::seekable_iterators::SeekableLendingIterator;
+use crate::{
+    comparator::Comparator,
+    cursor::CursorLendingIterator,
+    seekable_iterators::SeekableLendingIterator,
+};
+use crate::{
+    key_kind::{KeyKind, KeyOf},
+    lending_iterator_support::{LendItem, LentItem},
+    peeking::{PeekNextLend, PeekPrevLend},
+    seekable::{ItemToKey, Seekable},
+};
 
 
 #[derive(Debug, Clone, Copy)]
@@ -33,9 +37,9 @@ enum Direction {
 /// forwards iteration than backwards iteration. `MergingIter` itself otherwise has roughly equal
 /// performance in either direction, but has overhead for switching the direction of iteration
 /// (see below for more information). Moreover, switching direction does not play well with
-/// duplicate keys. Therefore, [`MergingIter::prev`], [`MergingIter::seek_before`], and
-/// [`MergingIter::seek_to_last`] (the three methods that use backwards iteration) should be
-/// avoided if possible.
+/// duplicate keys. Therefore, [`MergingIter::prev`], [`MergingIter::peek_prev`],
+/// [`MergingIter::seek_before`], and [`MergingIter::seek_to_last`] (the four methods that use
+/// backwards iteration) should be avoided if possible.
 ///
 /// # Warning for duplicate keys
 /// If a key is present in multiple iterators, then repeatedly calling `next` or repeatedly
@@ -54,13 +58,16 @@ enum Direction {
 /// The following methods need to switch direction if necessary, and iterate in a certain direction:
 /// - Forwards:
 ///   - [`MergingIter::next`]
+///   - [`MergingIter::peek_next`]
 /// - Backwards:
 ///   - [`MergingIter::prev`]
+///   - [`MergingIter::peek_prev`]
 ///
 /// The following methods are not impacted by the direction, but set the direction:
-/// - Set direction to forwards:
+/// - Set direction to forwards, with no cost to a following backwards-iterating method:
 ///   - [`MergingIter::new`]
 ///   - [`MergingIter::reset`]
+/// - Set direction to forwards:
 ///   - [`MergingIter::seek`]
 ///   - [`MergingIter::seek_to_first`]
 /// - Set direction to backwards:
@@ -165,7 +172,7 @@ where
                 let curr_key = Iter::item_to_key(curr_item);
                 if let Some((_, smallest_key)) = &smallest {
                     // Note that keys are expected to be cheap to clone
-                    if self.cmp.cmp(curr_key.clone(), smallest_key.clone()) == Ordering::Less {
+                    if self.cmp.cmp(curr_key.clone(), smallest_key.clone()).is_lt() {
                         // `curr_key` is smaller than the previous `smallest`'s key
                         smallest = Some((idx, curr_key));
                     }
@@ -194,8 +201,8 @@ where
                 let curr_key = Iter::item_to_key(curr_item);
                 if let Some((_, largest_key)) = &largest {
                     // Note that keys are expected to be cheap to clone
-                    if self.cmp.cmp(curr_key.clone(), largest_key.clone()) == Ordering::Greater {
-                        // `curr_key` is smaller than the previous `largest`'s key
+                    if self.cmp.cmp(curr_key.clone(), largest_key.clone()).is_gt() {
+                        // `curr_key` is larger than the previous `largest`'s key
                         largest = Some((idx, curr_key));
                     }
                 } else {
@@ -213,7 +220,7 @@ where
         }
     }
 
-    /// For use in `self.next()`, and nothing else.
+    /// For use in `next`, `peek_next`, and nothing else.
     ///
     /// Move all non-`current_iter` iterators one entry strictly in front of `current_iter`.
     fn switch_to_forwards(&mut self, current_idx: NonZero<usize>) -> &mut Iter {
@@ -237,7 +244,7 @@ where
             // `seek` provides a `geq` order, we want a strict greater-than order.
             if iter.current().is_some_and(|item| {
                 // Note that keys are expected to be cheap to clone
-                self.cmp.cmp(current_key.clone(), Iter::item_to_key(item)) == Ordering::Equal
+                self.cmp.cmp(current_key.clone(), Iter::item_to_key(item)).is_eq()
             }) {
                 iter.next();
             }
@@ -249,7 +256,7 @@ where
 
             if iter.current().is_some_and(|item| {
                 // Note that keys are expected to be cheap to clone
-                self.cmp.cmp(current_key.clone(), Iter::item_to_key(item)) == Ordering::Equal
+                self.cmp.cmp(current_key.clone(), Iter::item_to_key(item)).is_eq()
             }) {
                 iter.next();
             }
@@ -261,7 +268,7 @@ where
         current_iter
     }
 
-    /// For use in `self.prev()`, and nothing else.
+    /// For use in `prev`, `peek_prev`, and nothing else.
     ///
     /// Move all non-`current_iter` iterators one entry strictly behind `current_iter`.
     fn switch_to_backwards(&mut self, current_idx: NonZero<usize>) -> &mut Iter {
@@ -384,21 +391,155 @@ where
     }
 }
 
-// impl<Key, Cmp, Iter> PeekNextLend for MergingIter<Key, Cmp, Iter>
-// where
-//     Key:  KeyKind,
-//     Cmp:  Comparator<Key>,
-//     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key> + PeekNextLend,
-// {
-//     fn peek_next_and_commit_if<F>(&mut self, f: F)
-//     where
-//         F: Fn(Option<LentItem<'_, Self>>) -> bool
-//     {
-//         if let Some(current_iter) = self.get_current_iter_mut() {
-//             current_iter
-//         }
-//     }
-// }
+impl<Key, Cmp, Iter> PeekNextLend for MergingIter<Key, Cmp, Iter>
+where
+    Key:  KeyKind,
+    Cmp:  Comparator<Key>,
+    Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key> + PeekNextLend,
+{
+    fn peek_next(&mut self) -> Option<LentItem<'_, Self>> {
+        if let Some(current_idx) = self.current_iter {
+            if matches!(self.direction, Direction::Backwards) {
+                self.switch_to_forwards(current_idx);
+            }
+
+            // `self.next()` would return the minimum of `current_iter.peek_next()`
+            // and all other iterator's `current()` elements.
+
+            let current_idx = current_idx.get() - 1;
+            let mut smallest_peeked: Option<LentItem<'_, Iter>> = None;
+
+            for (idx, iter) in self.iterators.iter_mut().enumerate() {
+                let compare_against = if idx == current_idx {
+                    iter.peek_next()
+                } else {
+                    iter.current()
+                };
+
+                if let Some(curr_item) = compare_against {
+                    if let Some(smallest) = &smallest_peeked {
+                        if self.cmp.cmp(
+                            Iter::item_ref_to_key(&curr_item),
+                            Iter::item_ref_to_key(smallest),
+                        ).is_lt() {
+                            // `curr_item < smallest_peeked`
+                            smallest_peeked = Some(curr_item);
+                        }
+                    } else {
+                        // de-facto smallest, nothing was previously found
+                        smallest_peeked = Some(curr_item);
+                    }
+                } else {
+                    // The iterator is empty; continue.
+                }
+            }
+
+            smallest_peeked
+        } else {
+            // In this branch, we're `!valid()`. This means that _every_ iterator is currently
+            // `!valid()`.
+            // We need to find the smallest among all iterators' peeked next items.
+            let mut smallest_peeked: Option<LentItem<'_, Iter>> = None;
+
+            for iter in &mut self.iterators {
+                if let Some(curr_item) = iter.peek_next() {
+                    if let Some(smallest) = &smallest_peeked {
+                        if self.cmp.cmp(
+                            Iter::item_ref_to_key(&curr_item),
+                            Iter::item_ref_to_key(smallest),
+                        ).is_lt() {
+                            // `curr_item < smallest_peeked`
+                            smallest_peeked = Some(curr_item);
+                        }
+                    } else {
+                        // de-facto smallest, nothing was previously found
+                        smallest_peeked = Some(curr_item);
+                    }
+                } else {
+                    // The iterator is empty; continue.
+                }
+            }
+
+            self.direction = Direction::Forwards;
+            smallest_peeked
+        }
+    }
+}
+
+impl<Key, Cmp, Iter> PeekPrevLend for MergingIter<Key, Cmp, Iter>
+where
+    Key:  KeyKind,
+    Cmp:  Comparator<Key>,
+    Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key> + PeekPrevLend,
+{
+    fn peek_prev(&mut self) -> Option<LentItem<'_, Self>> {
+        if let Some(current_idx) = self.current_iter {
+            if matches!(self.direction, Direction::Forwards) {
+                self.switch_to_backwards(current_idx);
+            }
+
+            // `self.prev()` would return the maximum of `current_iter.peek_prev()`
+            // and all other iterator's `current()` elements.
+
+            let current_idx = current_idx.get() - 1;
+            let mut largest_peeked: Option<LentItem<'_, Iter>> = None;
+
+            for (idx, iter) in self.iterators.iter_mut().enumerate() {
+                let compare_against = if idx == current_idx {
+                    iter.peek_prev()
+                } else {
+                    iter.current()
+                };
+
+                if let Some(curr_item) = compare_against {
+                    if let Some(largest) = &largest_peeked {
+                        if self.cmp.cmp(
+                            Iter::item_ref_to_key(&curr_item),
+                            Iter::item_ref_to_key(largest),
+                        ).is_gt() {
+                            // `curr_item > smallest_peeked`
+                            largest_peeked = Some(curr_item);
+                        }
+                    } else {
+                        // de-facto largest, nothing was previously found
+                        largest_peeked = Some(curr_item);
+                    }
+                } else {
+                    // The iterator is empty; continue.
+                }
+            }
+
+            largest_peeked
+        } else {
+            // In this branch, we're `!valid()`. This means that _every_ iterator is currently
+            // `!valid()`.
+            // We need to find the largest among all iterators' peeked previous items.
+            let mut largest_peeked: Option<LentItem<'_, Iter>> = None;
+
+            for iter in &mut self.iterators {
+                if let Some(curr_item) = iter.peek_prev() {
+                    if let Some(largest) = &largest_peeked {
+                        if self.cmp.cmp(
+                            Iter::item_ref_to_key(&curr_item),
+                            Iter::item_ref_to_key(largest),
+                        ).is_gt() {
+                            // `curr_item > largest_peeked`
+                            largest_peeked = Some(curr_item);
+                        }
+                    } else {
+                        // de-facto largest, nothing was previously found
+                        largest_peeked = Some(curr_item);
+                    }
+                } else {
+                    // The iterator is empty; continue.
+                }
+            }
+
+            self.direction = Direction::Backwards;
+            largest_peeked
+        }
+    }
+}
 
 impl<Key, Cmp, Iter> ItemToKey<Key> for MergingIter<Key, Cmp, Iter>
 where
@@ -408,6 +549,11 @@ where
     #[inline]
     fn item_to_key(item: LentItem<'_, Self>) -> KeyOf<'_, Key> {
         Iter::item_to_key(item)
+    }
+
+    #[inline]
+    fn item_ref_to_key<'a>(item: &LentItem<'a, Self>) -> KeyOf<'a, Key> {
+        Iter::item_ref_to_key(item)
     }
 }
 
@@ -422,6 +568,8 @@ where
             iter.reset();
         }
         self.current_iter = None;
+        // Note that the direction doesn't actually matter when `self.current_iter` is `None`,
+        // but forwards is the default.
         self.direction = Direction::Forwards;
     }
 
@@ -481,34 +629,6 @@ where
         self.direction = Direction::Backwards;
     }
 }
-
-// impl<Key, Cmp, Iter> PeekNextLend for MergingIter<Key, Cmp, Iter>
-// where
-//     Key:  ?Sized,
-//     Cmp:  Comparator<Key>,
-//     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key> + PeekNextLend,
-// {
-//     fn peek_next_and_commit_if<F>(&mut self, f: F)
-//     where
-//         F: Fn(Option<LentItem<'_, Self>>) -> bool,
-//     {
-
-//     }
-// }
-
-// impl<Key, Cmp, Iter> PeekPrevLend for MergingIter<Key, Cmp, Iter>
-// where
-//     Key:  ?Sized,
-//     Cmp:  Comparator<Key>,
-//     Iter: SeekableLendingIterator<Key, Cmp> + ItemToKey<Key> + PeekPrevLend,
-// {
-//     fn peek_prev_and_commit_if<F>(&mut self, f: F)
-//     where
-//         F: Fn(Option<LentItem<'_, Self>>) -> bool,
-//     {
-
-//     }
-// }
 
 
 #[cfg(test)]

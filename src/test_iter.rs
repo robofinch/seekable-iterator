@@ -76,6 +76,10 @@ impl ItemToKey<RefKey<u8>> for TestIter<'_> {
     fn item_to_key(item: LentItem<'_, Self>) -> &'_ u8 {
         item
     }
+
+    fn item_ref_to_key<'a>(item: &LentItem<'a, Self>) -> &'a u8 {
+        item
+    }
 }
 
 impl Seekable<RefKey<u8>, OrdComparator> for TestIter<'_> {

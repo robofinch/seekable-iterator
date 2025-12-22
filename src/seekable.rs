@@ -72,6 +72,15 @@ pub trait ItemToKey<Key: KeyKind>: for<'lend> LendItem<'lend> {
     /// [`SeekableLendingIterator`]: crate::seekable_iterators::SeekableLendingIterator
     #[must_use]
     fn item_to_key(item: LentItem<'_, Self>) -> KeyOf<'_, Key>;
+
+    /// Convert one of the items of an iterator into a `Key` reference, intended for use with
+    /// a [`SeekableLendingIterator`].
+    ///
+    /// This conversion is expected to be cheap.
+    ///
+    /// [`SeekableLendingIterator`]: crate::seekable_iterators::SeekableLendingIterator
+    #[must_use]
+    fn item_ref_to_key<'a>(item: &LentItem<'a, Self>) -> KeyOf<'a, Key>;
 }
 
 #[cfg(any(feature = "lender", feature = "lending-iterator"))]
